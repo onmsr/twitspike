@@ -1,0 +1,39 @@
+; top-most EditorConfig file
+root = true
+
+; Unix-style newlines
+[*]
+end_of_line = LF
+charset = utf-8
+
+[*.scala]
+indent_style = space
+indent_size = 2
+
+[*.html]
+indent_style = space
+indent_size = 4
+
+[*.js]
+indent_style = space
+indent_size = 2
+
+[*.coffee]
+indent_style = space
+indent_size = 2
+
+[*.css]
+indent_style = space
+indent_size = 2
+
+[*.scss]
+indent_style = space
+indent_size = 2
+
+[*.less]
+indent_style = space
+indent_size = 2
+
+[*.json]
+indent_style = space
+indent_size = 2
