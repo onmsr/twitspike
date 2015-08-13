@@ -6,7 +6,7 @@ package jp.co.dwango.twitspike.models
  * ユーザーモデル
  */
 case class User(
-  id: String,
+  id: Long,
   name: String,
   nickname: String,
   email: String,
