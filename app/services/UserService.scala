@@ -16,23 +16,16 @@ import org.mindrot.jbcrypt.BCrypt;
  * ユーザーサービス
  *
  */
-class UserService(_client: AerospikeClient) extends AerospikeService {
+class UserService(_client: AerospikeClient) extends TSAerospikeService {
 
   val client = _client
-  val ns = "twitspike"
-  val set = "users"
 
   /**
    * 次のユーザーIDを取得する
    * 
    * @return 新しいユーザーID
    */
-  def nextId = {
-    val key = new Key(ns, null, "user_last_id")
-    val bin = new Bin("id", 1)
-    val record = client.operate(null, key, Operation.add(bin), Operation.get())
-    record.getLong("id")
-  }
+  def nextId = createNextId(client, ns, "user_last_id")
 
   /**
    * ユーザーレコードを作成する
@@ -46,10 +39,9 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    */
   def create(name: String, nickname: String, email: String, description: String, rawPassword: String) = {
     val id = nextId
-    val salt = BCrypt.gensalt
-    val password = BCrypt.hashpw(rawPassword, salt)
+    val password = BCrypt.hashpw(rawPassword, BCrypt.gensalt(12))
 
-    createUser(id, name, nickname, email, description, salt)
+    createUser(id, name, nickname, email, description)
     createAuthentication(id, email, password)
     createNickname(id, nickname)
   }
@@ -60,25 +52,19 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    * @param userId ユーザーID
    * @return Userオブジェクト
    */
-  def find(userId: Long): User = {
+  def findOneById(userId: Long): Option[User] = {
     implicit def userRecordMapToUser[A](m: Map[String, Object]) = {
       User(
-        m.get("id").getOrElse(0).asInstanceOf[Long],
+        m.get("id").getOrElse(0L).asInstanceOf[Long],
         m.get("name").getOrElse("").toString,
         m.get("nickname").getOrElse("").toString,
         m.get("email").getOrElse("").toString,
         m.get("description").getOrElse("").toString,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
         m.get("created_at").getOrElse("").toString,
         m.get("updated_at").getOrElse("").toString
       )
     }
-    findUser(userId)
+    readUser(userId).map { v => v }
   }
 
   /**
@@ -88,12 +74,35 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    * @return boolean
    */
   def delete(userId: Long) = {
-    val key = new Key(ns, "users", userId)
+    val key = getUsersKey(userId)
     remove(client, key)
   }
 
-  def findAll() = {
+  def find() = {
+    // @TODO
+    // get users from user set
+  }
 
+  def findFans(user: User) = {
+    // @TODO
+    // get user_ids from fans set
+    // get users from user set
+  }
+
+  def findCelebs(user: User) = {
+    // @TODO
+    // get user_ids from celebs set
+    // get users from user set
+  }
+
+  def findTimeline(user: User) = {
+    // @TODO
+    // get tweet_ids from user_tweets set
+    // get user_ids from celebs set
+    // get users from user set
+    // get tweet_ids from user_tweets set by user_id
+    // get all tweet from tweets set
+    // return List tweets
   }
 
   /**
@@ -104,7 +113,7 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    * @return セッションキー
    */
   def auth(email: String, rawPassword: String) = {
-    val key = new Key(ns, "authentications", email)
+    val key = getAuthenticationsKey(email)
     val authInfo = read(client, key).get
     val isAuth = BCrypt.checkpw(rawPassword, authInfo.getString("password"))
     if (isAuth) {
@@ -117,7 +126,7 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
       val sessionKeyBin = new Bin("sessionkey", sessionKey)
       val timestampBin = new Bin("timestamp", ts)
 
-      val key = new Key(ns, "sessionkeys", sessionKey)
+      val key = getSessionkeysKey(sessionKey)
       write(client, key, Array(userIdBin, sessionKeyBin, timestampBin))
       sessionKey
     } else {
@@ -134,14 +143,8 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    */
   def self(sessionKey: String) = {
     // セッションキーの更新の必要があるかも
-    val key = new Key(ns, "sessionkeys", sessionKey)
-    read(client, key) match {
-      // case None => 
-      case Some(sessionInfo) => {
-        val userId = sessionInfo.getLong("user_id")
-        find(userId)
-      }
-    }
+    val key = getSessionkeysKey(sessionKey)
+    read(client, key) map { sessionInfo => findOneById(sessionInfo.getLong("user_id")) }
   }
 
   /**
@@ -150,9 +153,10 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    * @param userId ユーザーID
    * @return ユーザー情報のはいったMapオブジェクト
    */
-  private[this] def findUser(userId: Long) = {
-    val key = new Key(ns, "users", userId)
-    read(client, key).map(_.bins).map(scala.collection.JavaConversions.mapAsScalaMap(_).toMap).getOrElse(Map[String, Object]())
+  private[this] def readUser(userId: Long): Option[Map[String, Object]] = {
+    import scala.collection.JavaConversions.mapAsScalaMap
+    val key = getUsersKey(userId)
+    read(client, key).map(_.bins.toMap)
   }
 
   /**
@@ -164,7 +168,7 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    * @param description   ユーザーの自己紹介文
    * @param salt          サルト値
    */
-  private[this] def createUser(id: Long, name: String, nickname: String, email: String, description: String, salt: String) = {
+  private[this] def createUser(id: Long, name: String, nickname: String, email: String, description: String) = {
     val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
 
     val idBin = new Bin("id", id)
@@ -172,12 +176,11 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
     val nicknameBin = new Bin("nickname", nickname)
     val emailBin = new Bin("email", email)
     val descriptionBin = new Bin("description", description)
-    val saltBin = new Bin("salt", salt)
     val createdAtBin = new Bin("created_at", ts)
     val updatedAtBin = new Bin("updated_at", ts)
 
-    val key = new Key(ns, "users", id)
-    write(client, key, Array(idBin, nameBin, nicknameBin, emailBin, descriptionBin, saltBin, createdAtBin, updatedAtBin))
+    val key = getUsersKey(id)
+    write(client, key, Array(idBin, nameBin, nicknameBin, emailBin, descriptionBin, createdAtBin, updatedAtBin))
   }
 
   /**
@@ -191,7 +194,7 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
   private[this] def createAuthentication(userId: Long, email: String, password: String) = {
     val passwordBin = new Bin("password", password)
     val userIdBin = new Bin("user_id", userId)
-    val key = new Key(ns, "authentications", email)
+    val key = getAuthenticationsKey(email)
     write(client, key, Array(passwordBin, userIdBin))
   }
 
@@ -204,7 +207,7 @@ class UserService(_client: AerospikeClient) extends AerospikeService {
    */
   private[this] def createNickname(userId: Long, nickname: String) = {
     val userIdBin = new Bin("user_id", userId)
-    val key = new Key(ns, "nicknames", nickname)
+    val key = getNicknamesKey(nickname)
     write(client, key, Array(userIdBin))
   }
 
