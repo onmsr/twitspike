@@ -2,6 +2,7 @@ package jp.co.dwango.twitspike.services
 
 import com.aerospike.client.AerospikeClient
 import com.aerospike.client.large.LargeList
+import com.aerospike.client.policy.BatchPolicy
 import com.aerospike.client.policy.ClientPolicy
 import com.aerospike.client.policy.Policy
 import com.aerospike.client.policy.QueryPolicy
@@ -27,6 +28,7 @@ sealed trait AerospikeServiceTrait {
   val cPolicy = new ClientPolicy
   val wPolicy = new WritePolicy
   val rPolicy = new Policy
+  val bPolicy = new BatchPolicy
   val sPolicy = new ScanPolicy
   val qPolicy = new QueryPolicy
 
@@ -38,13 +40,30 @@ sealed trait AerospikeServiceTrait {
   }
 
   /**
+   * レコードを一件読み出す
+   */
+  def readAsMap(client: AerospikeClient, key: Key) = {
+    import scala.collection.JavaConversions.mapAsScalaMap
+    read(client, key).map(_.bins.toMap)
+  }
+
+  /**
    * レコードを複数件読み出す
    */
   def read(client: AerospikeClient, keys: List[Key]) = {
-    val records = client.get(rPolicy, keys.toArray).toList
-    records.map { record => Option(record) } filter { _.isDefined }
+    val records = client.get(bPolicy, keys.toArray).toList
+    records.filter { Option(_).isDefined }
   }
 
+  /**
+   * レコードを複数件読み出す
+   */
+  def readAsMap(client: AerospikeClient, keys: List[Key]) = {
+    import scala.collection.JavaConversions.mapAsScalaMap
+    val records = client.get(bPolicy, keys.toArray).toList
+    records.filter { Option(_).isDefined } map { _.bins.toMap }
+  }
+  
   /**
    * レコードを一件書き込む
    */
@@ -132,6 +151,15 @@ sealed trait AerospikeServiceTrait {
    */
   def existsInLargeList(llist: LargeList, v: Long) = {
     findFromLargeList(llist, v).isDefined
+  }
+
+  /**
+   * ラージオーダードリストの値をすべて取得する
+   */
+  def scanLargeList(llist: LargeList) = {
+    import scala.collection.JavaConversions.asScalaBuffer
+    val records = llist.scan
+    if (records != null) records.toList else List()
   }
 
 }

@@ -22,6 +22,8 @@ trait TSAerospikeTrait {
 
   def getUsersKey(userId: Long) = new Key(ns, usersSet, userId)
 
+  def getUsersKeys(userIds: List[Long]) = userIds.map { getUsersKey(_) }
+
   def getAuthenticationsKey(email: String) = new Key(ns, authenticationsSet, email)
 
   def getSessionkeysKey(sessionKey: String) = new Key(ns, sessionkeysSet, sessionKey)

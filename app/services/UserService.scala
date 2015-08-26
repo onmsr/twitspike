@@ -53,18 +53,20 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
    * @return Userオブジェクト
    */
   def findOneById(userId: Long): Option[User] = {
-    implicit def userRecordMapToUser[A](m: Map[String, Object]) = {
-      User(
-        m.get("id").getOrElse(0L).asInstanceOf[Long],
-        m.get("name").getOrElse("").toString,
-        m.get("nickname").getOrElse("").toString,
-        m.get("email").getOrElse("").toString,
-        m.get("description").getOrElse("").toString,
-        m.get("created_at").getOrElse("").toString,
-        m.get("updated_at").getOrElse("").toString
-      )
-    }
-    readUser(userId).map { v => v }
+    import User.userRecordMapToUser
+    val key = getUsersKey(userId)
+    readAsMap(client, key).map { _.asInstanceOf[User] }
+  }
+
+  /**
+   * ユーザーを取得する。ユーザーレコードを取得しUserオブジェクトを生成する。
+   * 
+   * @param userIds ユーザーIDのリスト
+   * @return Userオブジェクトのリスト
+   */
+  def findByIds(userIds: List[Long]): List[User] = {
+    val keys = getUsersKeys(userIds)
+    readAsMap(client, keys).map { User.userRecordMapToUser(_) }
   }
 
   /**
@@ -145,18 +147,6 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
     // セッションキーの更新の必要があるかも
     val key = getSessionkeysKey(sessionKey)
     read(client, key) map { sessionInfo => findOneById(sessionInfo.getLong("user_id")) }
-  }
-
-  /**
-   * ユーザーレコードを取得する。
-   * 
-   * @param userId ユーザーID
-   * @return ユーザー情報のはいったMapオブジェクト
-   */
-  private[this] def readUser(userId: Long): Option[Map[String, Object]] = {
-    import scala.collection.JavaConversions.mapAsScalaMap
-    val key = getUsersKey(userId)
-    read(client, key).map(_.bins.toMap)
   }
 
   /**

@@ -86,26 +86,17 @@ class TweetService(_client: AerospikeClient) extends TSAerospikeService {
    * ツイートを一件取得する
    */
   def findOneById(tweetId: Long): Option[Tweet] = {
-    implicit def tweetRecordMapToTweet[A](m: Map[String, Object]) = {
-      Tweet(
-        m.get("id").getOrElse(0L).asInstanceOf[Long],
-        m.get("user_id").getOrElse(0L).asInstanceOf[Long],
-        m.get("content").getOrElse("").toString,
-        m.get("created_at").getOrElse("").toString
-      )
-    }
-    readTweet(tweetId).map { v => v }
+    import Tweet.tweetRecordMapToTweet
+    val key = getTweetsKey(tweetId)
+    readAsMap(client, key).map { _.asInstanceOf[Tweet] }
   }
 
   /**
-   * ツイートレコードを取得する。
-   * 
-   * @param tweetId ツイートID
-   * @return ツイート情報のはいったMapオブジェクト
+   * ツイートを複数件取得する
    */
-  private[this] def readTweet(tweetId: Long): Option[Map[String, Object]] = {
-    val key = getTweetsKey(tweetId)
-    read(client, key).map(_.bins).map(scala.collection.JavaConversions.mapAsScalaMap(_).toMap)
+  def findByIds(tweetIds: List[Long]): List[Tweet] = {
+    val keys = getTweetsKeys(tweetIds)
+    readAsMap(client, keys).map { Tweet.tweetRecordMapToTweet(_) }
   }
 
   /**
@@ -114,15 +105,7 @@ class TweetService(_client: AerospikeClient) extends TSAerospikeService {
   def findIds(userId: Long) = {
     val key = getUserTweetsKey(userId)
     val llist = client.getLargeList(wPolicy, key, "tweets")
-    llist.scan
-  }
-
-  /**
-   * ツイートを複数件取得する
-   */
-  def findByIds(tweetIds: List[Long]) = {
-    val keys = getTweetsKeys(tweetIds)
-    read(client, keys)
+    scanLargeList(llist).asInstanceOf[List[Long]]
   }
 
 }
