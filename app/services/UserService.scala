@@ -85,26 +85,30 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
     // get users from user set
   }
 
-  def findFans(user: User) = {
-    // @TODO
-    // get user_ids from fans set
-    // get users from user set
+  /**
+   * ユーザーのフォロワーID一覧を取得する
+   */
+  def findFanIds(userId: Long) = {
+    val fans = client.getLargeList(wPolicy, getFansKey(userId), "fans")
+    scanLargeList(fans).asInstanceOf[List[Long]]
   }
 
-  def findCelebs(user: User) = {
-    // @TODO
-    // get user_ids from celebs set
-    // get users from user set
+  /**
+   * ユーザーのフォロイーID一覧を取得する
+   */
+  def findCelebIds(userId: Long) = {
+    val celebs = client.getLargeList(wPolicy, getCelebsKey(userId), "celebs")
+    scanLargeList(celebs).asInstanceOf[List[Long]]
   }
 
-  def findTimeline(user: User) = {
-    // @TODO
-    // get tweet_ids from user_tweets set
-    // get user_ids from celebs set
-    // get users from user set
-    // get tweet_ids from user_tweets set by user_id
-    // get all tweet from tweets set
-    // return List tweets
+  /**
+   * ユーザーのタイムラインを取得する。愚直に全部合成版
+   */
+  def findTimeline(userId: Long) = {
+    val celebIds = findCelebIds(userId)
+    val ts = new TweetService(client)
+    val tweetIds = (userId :: celebIds).map(ts.findIds(_)).flatten
+    ts.findByIds(tweetIds)
   }
 
   /**
