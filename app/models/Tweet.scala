@@ -6,7 +6,8 @@ package jp.co.dwango.twitspike.models
  * ツイートモデル
  */
 case class Tweet(
-  id: String,
+  id: Long,
+  userId: Long,
   content: String,
   createdAt: String
 )

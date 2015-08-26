@@ -11,12 +11,6 @@ case class User(
   nickname: String,
   email: String,
   description: String,
-  fanIds: Option[List[String]],
-  celebIds: Option[List[String]],
-  tweetIds: Option[Map[String, String]],
-  fans: Option[List[User]],
-  celebs: Option[List[User]],
-  tweets: Option[List[Tweet]],
   createdAt: String,
   updatedAt: String
 )
