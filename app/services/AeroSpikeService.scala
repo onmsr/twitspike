@@ -98,7 +98,8 @@ sealed trait AerospikeServiceTrait {
    * ラージオーダードリストにハッシュマップデータを追加する
    */
   def addToLargeList(llist: LargeList, m: Map[_ <: Any, Any]) = {
-    llist.add(Value.get(scala.collection.JavaConversions.mapAsJavaMap(m)))
+    import scala.collection.JavaConversions.mapAsJavaMap
+    llist.add(Value.get(m))
   }
 
   /**
