@@ -10,7 +10,7 @@ import play.api.mvc.Controller
 class TweetController extends BaseController {
 
   def post() = TODO
-  def delete(tweetId: String) = TODO
-  def get(tweetId: String) = TODO
+  def delete(tweetId: Long) = TODO
+  def get(tweetId: Long) = TODO
 
 }

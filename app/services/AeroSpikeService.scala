@@ -16,6 +16,9 @@ import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
 import scala.util.control.Exception.catching
+import scala.util.control.Exception.allCatch
+import play.api.Play
+import play.api.Play.current
 
 /**
  * AerospikeService
@@ -36,7 +39,13 @@ sealed trait AerospikeServiceTrait {
    * レコードを一件読み出す
    */
   def read(client: AerospikeClient, key: Key) = {
-    Option(client.get(rPolicy, key))
+    Try { client.get(rPolicy, key) } match {
+      case Success(v) => Option(v)
+      case Failure(e) => {
+        // @TODO output log
+        None
+      }
+    }
   }
 
   /**
@@ -69,10 +78,10 @@ sealed trait AerospikeServiceTrait {
    */
   def write(client: AerospikeClient, key: Key, bins: Array[Bin]) = {
     Try { client.put(wPolicy, key, bins: _*) } match {
-      case Success(_) => true
+      case Success(_) => Right(true)
       case Failure(e) => {
         // @TODO output log
-        false
+        Left(e)
       }
     }
   }
@@ -82,10 +91,10 @@ sealed trait AerospikeServiceTrait {
    */
   def remove(client: AerospikeClient, key: Key) = {
     Try { client.delete(wPolicy, key) } match {
-      case Success(v) => v
+      case Success(v) => Right(v)
       case Failure(e) => {
         // @TODO output log
-        false
+        Left(e)
       }
     }
   }
@@ -109,8 +118,7 @@ sealed trait AerospikeServiceTrait {
   def createNextId(client: AerospikeClient, ns: String, pk: String) = {
     val key = new Key(ns, null, pk)
     val bin = new Bin("id", 1)
-    val record = client.operate(null, key, Operation.add(bin), Operation.get())
-    record.getLong("id")
+    allCatch either client.operate(null, key, Operation.add(bin), Operation.get()).getLong("id")
   }
 
   /**
@@ -118,21 +126,21 @@ sealed trait AerospikeServiceTrait {
    */
   def addToLargeList(llist: LargeList, m: Map[_ <: Any, Any]) = {
     import scala.collection.JavaConversions.mapAsJavaMap
-    llist.add(Value.get(m))
+    allCatch either llist.add(Value.get(m))
   }
 
   /**
    * ラージオーダードリストにデータを追加する
    */
   def addToLargeList(llist: LargeList, v: Long) = {
-    llist.add(Value.get(v))
+    allCatch either llist.add(Value.get(v))
   }
 
   /**
    * ラージオーダードリストからデータを削除する
    */
   def removeFromLargeList(llist: LargeList, v: Long) = {
-    llist.remove(Value.get(v))
+    allCatch either llist.remove(Value.get(v))
   }
 
   /**
@@ -142,7 +150,7 @@ sealed trait AerospikeServiceTrait {
     import scala.collection.JavaConversions.asScalaBuffer
     val records = Option(llist.find(Value.get(v)))
     records.map {
-      catching(classOf[NoSuchElementException]) opt _.toList.head
+      allCatch opt _.toList.head
     } flatten
   }
 
@@ -170,8 +178,7 @@ class AerospikeService extends AerospikeServiceTrait {
 
 object AerospikeService {
 
-  // @TODO 設定ファイルから取得
-  val serverUrl = "192.168.38.200"
+  val serverUrl = Play.configuration.getString("ts.asServer1").get
 
   /**
    * Aerospikeクライアントを取得する

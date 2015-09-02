@@ -2,14 +2,9 @@ package jp.co.dwango.twitspike.services
 
 import com.aerospike.client.AerospikeClient
 import com.aerospike.client.Bin
-import com.aerospike.client.Operation
-import com.aerospike.client.policy.GenerationPolicy
-import com.aerospike.client.policy.RecordExistsAction
 import jp.co.dwango.twitspike.models.Tweet
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.ISODateTimeFormat
-import jp.co.dwango.twitspike.models.User
 
 /**
  * TweetService
@@ -32,10 +27,12 @@ class TweetService(_client: AerospikeClient) extends TSAerospikeService {
    * ツイートを作成する
    */
   def create(userId: Long, content: String) = {
-    val id = nextId
-    val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
-    createTweet(userId, id, content, ts)
-    addUserTweets(userId, id, ts)
+    for {
+      id <- nextId.right
+      ts <- Right(new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)).right
+      _ <- createTweet(userId, id, content, ts).right
+      _ <- addUserTweets(userId, id, ts).right
+    } yield id
   }
 
   /**

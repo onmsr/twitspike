@@ -5,23 +5,23 @@
 # ユーザー関連API
 GET     /                           jp.co.dwango.twitspike.controllers.UserController.index
 POST    /users                      jp.co.dwango.twitspike.controllers.UserController.post()
-DELETE  /users/:userId              jp.co.dwango.twitspike.controllers.UserController.delete(userId: String)
-GET     /users/:userId              jp.co.dwango.twitspike.controllers.UserController.get(userId: String)
+DELETE  /users/:userId              jp.co.dwango.twitspike.controllers.UserController.delete(userId: Long)
+GET     /users/self                 jp.co.dwango.twitspike.controllers.UserController.self()
+GET     /users/:userId              jp.co.dwango.twitspike.controllers.UserController.get(userId: Long)
 GET     /users                      jp.co.dwango.twitspike.controllers.UserController.list()
 POST    /users/auth                 jp.co.dwango.twitspike.controllers.UserController.auth()
-GET     /users/self                 jp.co.dwango.twitspike.controllers.UserController.self()
 
-GET     /users/:userId/fans         jp.co.dwango.twitspike.controllers.UserController.fans(userId: String)
-GET     /users/:userId/celebs       jp.co.dwango.twitspike.controllers.UserController.celebs(userId: String)
-GET     /users/:userId/tweets       jp.co.dwango.twitspike.controllers.UserController.tweets(userId: String)
-GET     /users/:userId/timeline     jp.co.dwango.twitspike.controllers.UserController.timeline(userId: String)
+GET     /users/:userId/fans         jp.co.dwango.twitspike.controllers.UserController.fans(userId: Long)
+GET     /users/:userId/celebs       jp.co.dwango.twitspike.controllers.UserController.celebs(userId: Long)
+GET     /users/:userId/tweets       jp.co.dwango.twitspike.controllers.UserController.tweets(userId: Long)
+GET     /users/:userId/timeline     jp.co.dwango.twitspike.controllers.UserController.timeline(userId: Long)
 
 # ツイート関連API
 POST    /tweets                     jp.co.dwango.twitspike.controllers.TweetController.post()
-DELETE  /tweets/:tweetId            jp.co.dwango.twitspike.controllers.TweetController.delete(tweetId: String)
-GET     /tweets/:tweetId            jp.co.dwango.twitspike.controllers.TweetController.get(tweetId: String)
+DELETE  /tweets/:tweetId            jp.co.dwango.twitspike.controllers.TweetController.delete(tweetId: Long)
+GET     /tweets/:tweetId            jp.co.dwango.twitspike.controllers.TweetController.get(tweetId: Long)
 
 # フォロー関連API
-POST    /follows/:userId            jp.co.dwango.twitspike.controllers.FollowController.post(userId: String)
-DELETE  /follows/:userId            jp.co.dwango.twitspike.controllers.FollowController.delete(userId: String)
+POST    /follows/:userId            jp.co.dwango.twitspike.controllers.FollowController.post(userId: Long)
+DELETE  /follows/:userId            jp.co.dwango.twitspike.controllers.FollowController.delete(userId: Long)
 
