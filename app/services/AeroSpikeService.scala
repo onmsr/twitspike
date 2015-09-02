@@ -89,10 +89,10 @@ sealed trait AerospikeServiceTrait {
    */
   def remove(client: AerospikeClient, key: Key) = {
     Try { client.delete(wPolicy, key) } match {
-      case Success(v) => v
+      case Success(v) => Right(v)
       case Failure(e) => {
         // @TODO output log
-        false
+        Left(e)
       }
     }
   }

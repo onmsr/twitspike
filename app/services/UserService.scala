@@ -7,6 +7,8 @@ import com.aerospike.client.Operation
 import java.util.UUID
 import jp.co.dwango.twitspike.models.User
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException
+import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
+import jp.co.dwango.twitspike.controllers.TSMsgTrait
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.mindrot.jbcrypt.BCrypt;
@@ -17,7 +19,10 @@ import org.mindrot.jbcrypt.BCrypt;
  * ユーザーサービス
  *
  */
-class UserService(_client: AerospikeClient) extends TSAerospikeService {
+class UserService(_client: AerospikeClient)
+    extends TSAerospikeService
+    with TwitSpikeExceptionTrait
+    with TSMsgTrait {
 
   val client = _client
 
@@ -77,8 +82,7 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
    * @return boolean
    */
   def delete(userId: Long) = {
-    val key = getUsersKey(userId)
-    remove(client, key)
+    remove(client, getUsersKey(userId))
   }
 
   def find() = {
@@ -122,8 +126,7 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
   def auth(email: String, rawPassword: String) = {
     (for {
       authInfo <- read(client, getAuthenticationsKey(email)).toRight(
-        new TwitSpikeException(TwitSpikeException.AUTH_USER_NOT_FOUND_ERROR, "")
-      ).right
+        new TwitSpikeException(AUTH_USER_NOT_FOUND_ERROR, emailNotFoundErrorMessage)).right
       isAuth <- Right(BCrypt.checkpw(rawPassword, authInfo.getString("password"))).right
     } yield (isAuth, authInfo)) match {
       case Right((isAuth, authInfo)) => {
@@ -140,7 +143,7 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
           write(client, getSessionkeysKey(sessionKey), Array(userIdBin, sessionKeyBin, timestampBin))
           Right(sessionKey)
         } else {
-          Left(new TwitSpikeException(TwitSpikeException.AUTH_FAILED__ERROR, "認証に失敗しました"))
+          Left(new TwitSpikeException(AUTH_FAILED_ERROR, authFailedErrorMessage))
         }
       }
       case Left(e) => Left(e)

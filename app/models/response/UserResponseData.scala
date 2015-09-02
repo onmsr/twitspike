@@ -15,7 +15,7 @@ case class UserResponseData(
 
 object UserResponseData {
   implicit val writes = new Writes[UserResponseData] {
-    def writes(user: UserResponseData)= Json.obj(
+    def writes(user: UserResponseData) = Json.obj(
       "id" -> user.id,
       "name" -> user.name,
       "nickname" -> user.nickname,

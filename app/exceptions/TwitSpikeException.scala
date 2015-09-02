@@ -1,8 +1,11 @@
 package jp.co.dwango.twitspike.exceptions
 
-case class TwitSpikeException(statusCode: Int, message: String) extends RuntimeException
+import play.api.libs.json.Json
+import play.api.libs.json.Writes
 
-object TwitSpikeException {
+case class TwitSpikeException(code: Int, message: String) extends RuntimeException
+
+trait TwitSpikeExceptionTrait {
   /**
    * ユーザーが見つからない
    */  
@@ -26,6 +29,14 @@ object TwitSpikeException {
   /**
    * 認証に失敗した。認証ユーザーは存在するが、パスワードが一致しない
    */
-  val AUTH_FAILED__ERROR = 2002
+  val AUTH_FAILED_ERROR = 2002
+}
 
+object TwitSpikeException extends TwitSpikeExceptionTrait {
+  implicit val writes = new Writes[TwitSpikeException] {
+    def writes(e: TwitSpikeException) = Json.obj(
+      "code" -> e.code,
+      "message" -> e.message
+    )
+  }
 }
