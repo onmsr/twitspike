@@ -9,7 +9,7 @@ import play.api.mvc.Controller
  */
 class FollowController extends BaseController {
 
-  def post(userId: String) = TODO
-  def delete(userId: String) = TODO
+  def post(userId: Long) = TODO
+  def delete(userId: Long) = TODO
 
 }
