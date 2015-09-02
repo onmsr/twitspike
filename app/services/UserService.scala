@@ -2,8 +2,6 @@ package jp.co.dwango.twitspike.services
 
 import com.aerospike.client.AerospikeClient
 import com.aerospike.client.Bin
-import com.aerospike.client.Key
-import com.aerospike.client.Operation
 import java.util.UUID
 import jp.co.dwango.twitspike.models.User
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException
@@ -11,7 +9,7 @@ import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
 import jp.co.dwango.twitspike.controllers.TSMsgTrait
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import org.mindrot.jbcrypt.BCrypt;
+import org.mindrot.jbcrypt.BCrypt
 
 /**
  * UserService
@@ -169,7 +167,6 @@ class UserService(_client: AerospikeClient)
    * @param nickname      ユーザーのニックネーム
    * @param email         メールアドレス
    * @param description   ユーザーの自己紹介文
-   * @param salt          サルト値
    */
   private[this] def createUser(id: Long, name: String, nickname: String, email: String, description: String) = {
     val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)

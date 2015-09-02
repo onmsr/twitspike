@@ -17,6 +17,8 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.control.Exception.catching
 import scala.util.control.Exception.allCatch
+import play.api.Play
+import play.api.Play.current
 
 /**
  * AerospikeService
@@ -176,8 +178,7 @@ class AerospikeService extends AerospikeServiceTrait {
 
 object AerospikeService {
 
-  // @TODO 設定ファイルから取得
-  val serverUrl = "192.168.45.200"
+  val serverUrl = Play.configuration.getString("ts.asServer1").get
 
   /**
    * Aerospikeクライアントを取得する

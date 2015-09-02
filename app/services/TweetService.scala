@@ -2,14 +2,9 @@ package jp.co.dwango.twitspike.services
 
 import com.aerospike.client.AerospikeClient
 import com.aerospike.client.Bin
-import com.aerospike.client.Operation
-import com.aerospike.client.policy.GenerationPolicy
-import com.aerospike.client.policy.RecordExistsAction
 import jp.co.dwango.twitspike.models.Tweet
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.ISODateTimeFormat
-import jp.co.dwango.twitspike.models.User
 
 /**
  * TweetService
