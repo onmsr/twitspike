@@ -6,6 +6,7 @@ import com.aerospike.client.Key
 import com.aerospike.client.Operation
 import java.util.UUID
 import jp.co.dwango.twitspike.models.User
+import jp.co.dwango.twitspike.exceptions.TwitSpikeException
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.mindrot.jbcrypt.BCrypt;
@@ -38,12 +39,13 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
    * @return
    */
   def create(name: String, nickname: String, email: String, description: String, rawPassword: String) = {
-    val id = nextId
-    val password = BCrypt.hashpw(rawPassword, BCrypt.gensalt(12))
-
-    createUser(id, name, nickname, email, description)
-    createAuthentication(id, email, password)
-    createNickname(id, nickname)
+    for {
+      id <- nextId.right
+      password <- Right(BCrypt.hashpw(rawPassword, BCrypt.gensalt(12))).right
+      _ <- createUser(id, name, nickname, email, description).right
+      _ <- createAuthentication(id, email, password).right
+      _ <- createNickname(id, nickname).right
+    } yield id
   }
 
   /**
@@ -53,9 +55,8 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
    * @return Userオブジェクト
    */
   def findOneById(userId: Long): Option[User] = {
-    import User.userRecordMapToUser
     val key = getUsersKey(userId)
-    readAsMap(client, key).map { _.asInstanceOf[User] }
+    readAsMap(client, key).map { User.userRecordMapToUser(_) }
   }
 
   /**
@@ -119,25 +120,30 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
    * @return セッションキー
    */
   def auth(email: String, rawPassword: String) = {
-    val key = getAuthenticationsKey(email)
-    val authInfo = read(client, key).get
-    val isAuth = BCrypt.checkpw(rawPassword, authInfo.getString("password"))
-    if (isAuth) {
-      // 認証成功 + セッションキー発行
-      val id = authInfo.getLong("user_id")
-      val sessionKey = UUID.randomUUID().toString
-      val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
+    (for {
+      authInfo <- read(client, getAuthenticationsKey(email)).toRight(
+        new TwitSpikeException(TwitSpikeException.AUTH_USER_NOT_FOUND_ERROR, "")
+      ).right
+      isAuth <- Right(BCrypt.checkpw(rawPassword, authInfo.getString("password"))).right
+    } yield (isAuth, authInfo)) match {
+      case Right((isAuth, authInfo)) => {
+        if (isAuth) {
+          // 認証成功 + セッションキー発行
+          val id = authInfo.getLong("user_id")
+          val sessionKey = UUID.randomUUID().toString
+          val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
 
-      val userIdBin = new Bin("user_id", id)
-      val sessionKeyBin = new Bin("sessionkey", sessionKey)
-      val timestampBin = new Bin("timestamp", ts)
+          val userIdBin = new Bin("user_id", id)
+          val sessionKeyBin = new Bin("sessionkey", sessionKey)
+          val timestampBin = new Bin("timestamp", ts)
 
-      val key = getSessionkeysKey(sessionKey)
-      write(client, key, Array(userIdBin, sessionKeyBin, timestampBin))
-      sessionKey
-    } else {
-      // 認証失敗
-
+          write(client, getSessionkeysKey(sessionKey), Array(userIdBin, sessionKeyBin, timestampBin))
+          Right(sessionKey)
+        } else {
+          Left(new TwitSpikeException(TwitSpikeException.AUTH_FAILED__ERROR, "認証に失敗しました"))
+        }
+      }
+      case Left(e) => Left(e)
     }
   }
 
@@ -150,7 +156,7 @@ class UserService(_client: AerospikeClient) extends TSAerospikeService {
   def self(sessionKey: String) = {
     // セッションキーの更新の必要があるかも
     val key = getSessionkeysKey(sessionKey)
-    read(client, key) map { sessionInfo => findOneById(sessionInfo.getLong("user_id")) }
+    read(client, key) map { sessionInfo => findOneById(sessionInfo.getLong("user_id")) } flatten
   }
 
   /**

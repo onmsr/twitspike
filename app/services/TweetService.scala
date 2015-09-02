@@ -32,10 +32,12 @@ class TweetService(_client: AerospikeClient) extends TSAerospikeService {
    * ツイートを作成する
    */
   def create(userId: Long, content: String) = {
-    val id = nextId
-    val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
-    createTweet(userId, id, content, ts)
-    addUserTweets(userId, id, ts)
+    for {
+      id <- nextId.right
+      ts <- Right(new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)).right
+      _ <- createTweet(userId, id, content, ts).right
+      _ <- addUserTweets(userId, id, ts).right
+    } yield id
   }
 
   /**
