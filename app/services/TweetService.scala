@@ -5,6 +5,9 @@ import com.aerospike.client.Bin
 import jp.co.dwango.twitspike.models.Tweet
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
+import jp.co.dwango.twitspike.exceptions.TwitSpikeException
+import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
+import jp.co.dwango.twitspike.controllers.TSMsgTrait
 
 /**
  * TweetService
@@ -12,7 +15,10 @@ import org.joda.time.format.ISODateTimeFormat
  * ツイートサービス
  *
  */
-class TweetService(_client: AerospikeClient) extends TSAerospikeService {
+class TweetService(_client: AerospikeClient)
+    extends TSAerospikeService
+    with TwitSpikeExceptionTrait
+    with TSMsgTrait {
 
   val client = _client
 
@@ -67,7 +73,8 @@ class TweetService(_client: AerospikeClient) extends TSAerospikeService {
     val tweetOpt = findOneById(tweetId)
     tweetOpt match {
       case None => {
-        // @TODO ツイートが存在しないとき
+        // ツイートが存在しないとき
+        Left(new TwitSpikeException(TWEET_NOT_FOUND_ERROR, tweetNotFoundErrorMessage))
       }
       case Some(_) => {
         // ユーザーとツイートの関係情報の削除 -> ツイート本体の削除
@@ -83,9 +90,8 @@ class TweetService(_client: AerospikeClient) extends TSAerospikeService {
    * ツイートを一件取得する
    */
   def findOneById(tweetId: Long): Option[Tweet] = {
-    import Tweet.tweetRecordMapToTweet
     val key = getTweetsKey(tweetId)
-    readAsMap(client, key).map { _.asInstanceOf[Tweet] }
+    readAsMap(client, key).map { Tweet.tweetRecordMapToTweet(_) }
   }
 
   /**

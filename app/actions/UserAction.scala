@@ -16,10 +16,13 @@ object UserAction extends ActionBuilder[UserRequest] with ActionTransformer[Requ
 
   def getUserFromSessionKey(sessionKey: String) = {
     (for {
-      client <- Some(AerospikeService.getClient)
-      user <- new UserService(client).self(sessionKey)
-      _ <- (allCatch opt client.close)
-    } yield user)
+      client <- AerospikeService.getClient.right
+      user <- Right(new UserService(client).self(sessionKey)).right
+      _ <- (allCatch either client.close).right
+    } yield user) match {
+      case Left(e) => None
+      case Right(user) => user
+    }
   }
 
   def transform[A](request: Request[A]) = Future.successful {
