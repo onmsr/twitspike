@@ -30,6 +30,11 @@ trait TwitSpikeExceptionTrait {
    * 認証に失敗した。認証ユーザーは存在するが、パスワードが一致しない
    */
   val AUTH_FAILED_ERROR = 2002
+
+  /**
+   * ツイートが見つからない
+   */  
+  val TWEET_NOT_FOUND_ERROR = 1000
 }
 
 object TwitSpikeException extends TwitSpikeExceptionTrait {

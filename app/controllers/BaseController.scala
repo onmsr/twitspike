@@ -9,6 +9,7 @@ import play.api.data.Form
 import play.api.libs.json.Json
 
 trait TSMsgTrait {
+
   val validationErrorMessage = Play.configuration.getString("ts.msgs.error.validation").get
   val internalServerErrorMessage = Play.configuration.getString("ts.msgs.error.internalServerError").get
   val userNotFoundErrorMessage = Play.configuration.getString("ts.msgs.error.userNotFound").get
@@ -16,6 +17,7 @@ trait TSMsgTrait {
   val emailNotFoundErrorMessage = Play.configuration.getString("ts.msgs.error.emailNotFound").get
   val authFailedErrorMessage = Play.configuration.getString("ts.msgs.error.authFailed").get
   val permissionErrorMessage = Play.configuration.getString("ts.msgs.error.permissionError").get
+  val tweetNotFoundErrorMessage = Play.configuration.getString("ts.msgs.error.tweetNotFound").get
 
 }
 
