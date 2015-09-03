@@ -15,10 +15,10 @@ import com.aerospike.client.Key
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
-import scala.util.control.Exception.catching
 import scala.util.control.Exception.allCatch
 import play.api.Play
 import play.api.Play.current
+import scala.collection.JavaConversions.mapAsJavaMap
 
 /**
  * AerospikeService
@@ -125,8 +125,7 @@ sealed trait AerospikeServiceTrait {
    * ラージオーダードリストにハッシュマップデータを追加する
    */
   def addToLargeList(llist: LargeList, m: Map[_ <: Any, Any]) = {
-    import scala.collection.JavaConversions.mapAsJavaMap
-    allCatch either llist.add(Value.get(m))
+    allCatch either llist.add(Value.get(mapAsJavaMap(m)))
   }
 
   /**
@@ -184,7 +183,7 @@ object AerospikeService {
    * Aerospikeクライアントを取得する
    */
   def getClient = {
-    new AerospikeClient(serverUrl, 3000)
+    allCatch either new AerospikeClient(serverUrl, 3000)
   }
 
 }

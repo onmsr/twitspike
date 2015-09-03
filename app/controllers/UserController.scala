@@ -19,22 +19,13 @@ import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
  *
  * ユーザー関連のAPIを管理するコントローラー
  */
-class UserController extends BaseController with TwitSpikeExceptionTrait {
+class UserController extends BaseController {
 
   def index = TODO
 
-  def getRequestData[T](form: Form[T])(implicit request: play.api.mvc.Request[_]): Either[Exception, T] = {
-    val param = form.bindFromRequest
-    if (param.hasErrors || param.hasGlobalErrors) {
-      Left(new TwitSpikeException(TwitSpikeException.VALIDATIONS_ERROR, validationErrorMessage))
-    } else {
-      Right(param.value.get)
-    }
-  }
-
   def post = Action(parse.json) { implicit request =>
     (for {
-      client <- Right(AerospikeService.getClient).right
+      client <- AerospikeService.getClient.right
       u <- getRequestData(UserRequestDataConstraint.post).right
       id <- new UserService(client).create(u.name, u.nickname, u.email, u.description, u.rawPassword).right
       _ <- (allCatch either client.close).right
@@ -67,7 +58,7 @@ class UserController extends BaseController with TwitSpikeExceptionTrait {
         // 削除する権限があるかどうか確認
         if (user.id == userId) {
           (for {
-            client <- Right(AerospikeService.getClient).right
+            client <- AerospikeService.getClient.right
             result <- new UserService(client).delete(userId).right
             _ <- (allCatch either client.close).right
           } yield result) match {
@@ -83,7 +74,7 @@ class UserController extends BaseController with TwitSpikeExceptionTrait {
 
   def get(userId: Long) = Action { implicit request =>
     (for {
-      client <- Right(AerospikeService.getClient).right
+      client <- AerospikeService.getClient.right
       user <- new UserService(client).findOneById(userId).toRight(
         new TwitSpikeException(USER_NOT_FOUND_ERROR, userNotFoundErrorMessage)).right
       userResponse <- Right(getUserResponseData(user)).right
@@ -118,7 +109,7 @@ class UserController extends BaseController with TwitSpikeExceptionTrait {
 
   def auth() = Action(parse.json) { implicit request =>
     (for {
-      client <- Right(AerospikeService.getClient).right
+      client <- AerospikeService.getClient.right
       u <- getRequestData(UserRequestDataConstraint.auth).right
       sessionKey <- new UserService(client).auth(u.email, u.rawPassword).right
       _ <- (allCatch either client.close).right

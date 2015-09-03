@@ -76,7 +76,7 @@ class UserAPISpec extends Specification {
 
     "[GET /users/:userId] ユーザーの取得" should {
       "指定したユーザーが存在して正常にユーザーが取得される" in new WithApplication{
-        val userId = 5
+        val userId = 1
         val req = FakeRequest(GET, s"/users/${userId}")
           .withHeaders("Content-Type" -> "application/json")
 
@@ -140,7 +140,7 @@ class UserAPISpec extends Specification {
 
     "[GET /users/self] 認証ユーザーの取得" should {
       "正常に認証ユーザーが取得できる" in new WithApplication{
-        val sessionKey = "8f663e9d-a418-4580-ba6c-5772839ec256"
+        val sessionKey = "451e53cb-be5a-4285-b2c3-3f2e21bb4010"
         val req = FakeRequest(GET, "/users/self")
           .withHeaders(HeaderNames.COOKIE -> ("TS-Session-Key=" + sessionKey))
 

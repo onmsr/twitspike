@@ -1,8 +1,12 @@
 package jp.co.dwango.twitspike.controllers
 
+import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
+import jp.co.dwango.twitspike.exceptions.TwitSpikeException
 import play.api.mvc.Controller
 import play.api.Play
 import play.api.Play.current
+import play.api.data.Form
+import play.api.libs.json.Json
 
 trait TSMsgTrait {
   val validationErrorMessage = Play.configuration.getString("ts.msgs.error.validation").get
@@ -20,5 +24,15 @@ trait TSMsgTrait {
  * 
  * APIコントローラーの基底クラス
  */
-class BaseController extends Controller with TSMsgTrait {
+class BaseController extends Controller with TSMsgTrait with TwitSpikeExceptionTrait {
+
+  def getRequestData[T](form: Form[T])(implicit request: play.api.mvc.Request[_]): Either[Exception, T] = {
+    val param = form.bindFromRequest
+    if (param.hasErrors || param.hasGlobalErrors) {
+      Left(new TwitSpikeException(VALIDATIONS_ERROR, validationErrorMessage))
+    } else {
+      Right(param.value.get)
+    }
+  }
+
 }

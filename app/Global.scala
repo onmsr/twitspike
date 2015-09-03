@@ -1,8 +1,8 @@
 package jp.co.dwango.twitspike.globals
 
 import play.api.{Application, Logger, GlobalSettings}
-import play.api.mvc.{Handler, RequestHeader}
-
+import play.api.mvc.{Handler, RequestHeader, Results}
+import scala.concurrent.Future
 
 object Global extends GlobalSettings {
 
@@ -19,13 +19,15 @@ object Global extends GlobalSettings {
     Logger.info("Application shutdown...")
   }
 
-  /*
-   override def onError(request: RequestHeader, e: Throwable) = {
-   }
+  override def onError(request: RequestHeader, e: Throwable) = {
+    Logger.info("internal server error")
+    Future.successful(Results.InternalServerError("internal server error"))
+  }
 
+  /*
    override def onHandlerNotFound(request: RequestHeader) = {
    }
-
+   
    override def onBadRequest(request: RequestHeader, error: String) = {
    }
    */
