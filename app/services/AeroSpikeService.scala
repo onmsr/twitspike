@@ -37,6 +37,10 @@ sealed trait AerospikeServiceTrait {
 
   /**
    * レコードを一件読み出す
+   *
+   * @param client Aerospikeクライアント
+   * @param key キー
+   * @return Option[T]
    */
   def read(client: AerospikeClient, key: Key) = {
     Try { client.get(rPolicy, key) } match {
@@ -50,6 +54,10 @@ sealed trait AerospikeServiceTrait {
 
   /**
    * レコードを一件読み出す
+   *
+   * @param client Aerospikeクライアント
+   * @param key キー
+   * @return Map[String, T]
    */
   def readAsMap(client: AerospikeClient, key: Key) = {
     import scala.collection.JavaConversions.mapAsScalaMap
@@ -58,6 +66,10 @@ sealed trait AerospikeServiceTrait {
 
   /**
    * レコードを複数件読み出す
+   *
+   * @param client Aerospikeクライアント
+   * @param keys キー
+   * @return List[T]
    */
   def read(client: AerospikeClient, keys: List[Key]) = {
     val records = client.get(bPolicy, keys.toArray).toList
@@ -66,15 +78,24 @@ sealed trait AerospikeServiceTrait {
 
   /**
    * レコードを複数件読み出す
+   *
+   * @param client Aerospikeクライアント
+   * @param keys キー
+   * @return List[Map[String, T]]
    */
   def readAsMap(client: AerospikeClient, keys: List[Key]) = {
     import scala.collection.JavaConversions.mapAsScalaMap
     val records = client.get(bPolicy, keys.toArray).toList
     records.filter { Option(_).isDefined } map { _.bins.toMap }
   }
-  
+
   /**
    * レコードを一件書き込む
+   *
+   * @param client Aerospikeクライアント
+   * @param key キー
+   * @param bins
+   * @return
    */
   def write(client: AerospikeClient, key: Key, bins: Array[Bin]) = {
     Try { client.put(wPolicy, key, bins: _*) } match {
@@ -88,6 +109,10 @@ sealed trait AerospikeServiceTrait {
 
   /**
    * レコードを一件削除する
+   *
+   * @param client Aerospikeクライアント
+   * @param key キー
+   * @return
    */
   def remove(client: AerospikeClient, key: Key) = {
     Try { client.delete(wPolicy, key) } match {
@@ -101,6 +126,10 @@ sealed trait AerospikeServiceTrait {
 
   /**
    * レコードが存在しているかどうか確認する
+   *
+   * @param client Aerospikeクライアント
+   * @param key キー
+   * @return
    */
   def exist(client: AerospikeClient, key: Key) = {
     Try { client.exists(rPolicy, key) } match {
@@ -121,6 +150,9 @@ sealed trait AerospikeServiceTrait {
     allCatch either client.operate(null, key, Operation.add(bin), Operation.get()).getLong("id")
   }
 
+  /**
+   * ラージオーダードリストを取得する
+   */
   def getLargeList(client: AerospikeClient, wp: WritePolicy, key: Key, bin: String) = {
     allCatch either client.getLargeList(wp, key, bin)
   }

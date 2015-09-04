@@ -11,13 +11,21 @@ import com.aerospike.client.Key
 trait TSAerospikeTrait {
 
   val ns = "twitspike"
+
   val usersSet = "users"
+
   val authenticationsSet = "authentications"
+
   val sessionkeysSet = "sessionkeys"
+
   val nicknamesSet = "nicknames"
+
   val tweetsSet = "tweets"
+
   val userTweetsSet = "user_tweets"
+
   val fansSet = "fans"
+
   val celebsSet = "celebs"
 
   def getUsersKey(userId: Long) = new Key(ns, usersSet, userId)

@@ -21,6 +21,11 @@ class UserController extends BaseController {
 
   def index = TODO
 
+  /**
+   * ユーザーの登録を行う
+   *
+   * @return
+   */
   def post = Action(parse.json) { implicit request =>
     (for {
       client <- AerospikeService.getClient.right
@@ -38,6 +43,12 @@ class UserController extends BaseController {
     }
   }
 
+  /**
+   * ユーザーを削除する
+   *
+   * @param userId 削除するユーザーのID
+   * @return
+   */
   def delete(userId: Long) = UserAction { implicit request =>
     (for {
       sessionKey <- request.sessionKey.toRight(
@@ -70,6 +81,12 @@ class UserController extends BaseController {
     }
   }
 
+  /**
+   * ユーザー情報の取得
+   *
+   * @param userId 取得したいユーザーのID
+   * @return
+   */
   def get(userId: Long) = Action { implicit request =>
     (for {
       client <- AerospikeService.getClient.right
@@ -91,20 +108,18 @@ class UserController extends BaseController {
     }
   }
 
-  private[this] def getUserResponseData[A](u: User) = {
-    UserResponseData(
-      u.id,
-      u.nickname,
-      u.nickname,
-      u.email,
-      u.description,
-      None,
-      None
-    )
-  }
-
+  /**
+   * ユーザー一覧を取得する
+   *
+   * @return
+   */
   def list() = TODO
 
+  /**
+   * メールアドレスとパスワードからユーザーの認証を行う。成功した場合にセッションキーを発行する
+   *
+   * @return
+   */
   def auth() = Action(parse.json) { implicit request =>
     (for {
       client <- AerospikeService.getClient.right
@@ -124,6 +139,11 @@ class UserController extends BaseController {
     }
   }
 
+  /**
+   * 認証ユーザーの情報を取得する
+   *
+   * @return
+   */
   def self() = UserAction { implicit request =>
     (for {
       sessionKey <- request.sessionKey.toRight(
@@ -147,8 +167,30 @@ class UserController extends BaseController {
   }
 
   def fans(userId: Long) = TODO
+
   def celebs(userId: Long) = TODO
+
   def tweets(userId: Long) = TODO
+
   def timeline(userId: Long) = TODO
+
+  /**
+   * ユーザーレスポンスデータの作成
+   *
+   * @param u ユーザー
+   * @tparam A
+   * @return
+   */
+  private[this] def getUserResponseData[A](u: User) = {
+    UserResponseData(
+      u.id,
+      u.nickname,
+      u.nickname,
+      u.email,
+      u.description,
+      None,
+      None
+    )
+  }
 
 }

@@ -3,8 +3,18 @@ package jp.co.dwango.twitspike.exceptions
 import play.api.libs.json.Json
 import play.api.libs.json.Writes
 
+/**
+ * TwitSpikeException
+ *
+ * @param code エラーコード
+ * @param message エラーメッセージ
+ */
 case class TwitSpikeException(code: Int, message: String) extends RuntimeException
 
+/**
+ * TwitSpikeでのAPIのエラーコード一覧
+ * 1000番台は汎用的なエラー, 2000番台はクライアントエラー
+ */
 trait TwitSpikeExceptionTrait {
   /**
    * ユーザーが見つからない

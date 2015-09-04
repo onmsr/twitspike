@@ -15,6 +15,12 @@ import scala.util.control.Exception.allCatch
  */
 class FollowController extends BaseController {
 
+  /**
+   * 認証ユーザーが指定したユーザーをフォローする
+   *
+   * @param targetUserId フォローしたいユーザーのID
+   * @return
+   */
   def post(targetUserId: Long) = UserAction { implicit request =>
     (for {
       sessionKey <- request.sessionKey.toRight(
@@ -37,6 +43,12 @@ class FollowController extends BaseController {
     }
   }
 
+  /**
+   * 認証ユーザーの指定したユーザーのフォローを解除する
+   *
+   * @param targetUserId フォローを解除したいユーザーのID
+   * @return
+   */
   def delete(targetUserId: Long) = UserAction { implicit request =>
     (for {
       sessionKey <- request.sessionKey.toRight(

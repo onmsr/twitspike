@@ -77,7 +77,7 @@ class UserService(_client: AerospikeClient)
    * ユーザーを削除する
    * 
    * @param userId ユーザーID
-   * @return boolean
+   * @return
    */
   def delete(userId: Long) = {
     remove(client, getUsersKey(userId))
@@ -90,6 +90,9 @@ class UserService(_client: AerospikeClient)
 
   /**
    * ユーザーのフォロワーID一覧を取得する
+   *
+   * @param userId ユーザーID
+   * @return
    */
   def findFanIds(userId: Long) = {
     val fans = client.getLargeList(wPolicy, getFansKey(userId), "fans")
@@ -98,6 +101,9 @@ class UserService(_client: AerospikeClient)
 
   /**
    * ユーザーのフォロイーID一覧を取得する
+   *
+   * @param userId ユーザーID
+   * @return
    */
   def findCelebIds(userId: Long) = {
     val celebs = client.getLargeList(wPolicy, getCelebsKey(userId), "celebs")
@@ -106,6 +112,9 @@ class UserService(_client: AerospikeClient)
 
   /**
    * ユーザーのタイムラインを取得する。愚直に全部合成版
+   *
+   * @param userId ユーザーID
+   * @return
    */
   def findTimeline(userId: Long) = {
     val celebIds = findCelebIds(userId)
@@ -167,6 +176,7 @@ class UserService(_client: AerospikeClient)
    * @param nickname      ユーザーのニックネーム
    * @param email         メールアドレス
    * @param description   ユーザーの自己紹介文
+   * @return
    */
   private[this] def createUser(id: Long, name: String, nickname: String, email: String, description: String) = {
     val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
@@ -189,7 +199,7 @@ class UserService(_client: AerospikeClient)
    * @param userId    ユーザーID
    * @param email     メールアドレス
    * @param password  ハッシュ化されたパスワード
-   * @return boolean
+   * @return
    */
   private[this] def createAuthentication(userId: Long, email: String, password: String) = {
     val passwordBin = new Bin("password", password)
@@ -203,7 +213,7 @@ class UserService(_client: AerospikeClient)
    * 
    * @param userId    ユーザーID
    * @param nickname  ニックネーム
-   * @return boolean
+   * @return
    */
   private[this] def createNickname(userId: Long, nickname: String) = {
     val userIdBin = new Bin("user_id", userId)

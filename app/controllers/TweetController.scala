@@ -21,6 +21,11 @@ import jp.co.dwango.twitspike.models.response.TweetResponseData
  */
 class TweetController extends BaseController {
 
+  /**
+   * 認証ユーザーのツイートの登録を行う
+   *
+   * @return
+   */
   def post() = UserAction(parse.json) { implicit request =>
     (for {
       sessionKey <- request.sessionKey.toRight(
@@ -44,6 +49,12 @@ class TweetController extends BaseController {
     }
   }
 
+  /**
+   * ツイートの削除を行う。認証ユーザーのツイートのみ許可。
+   *
+   * @param tweetId ツイートID
+   * @return
+   */
   def delete(tweetId: Long) = UserAction { implicit request => 
     (for {
       sessionKey <- request.sessionKey.toRight(
@@ -80,6 +91,12 @@ class TweetController extends BaseController {
     }
   }
 
+  /**
+   * 指定したツイートの取得
+   *
+   * @param tweetId ツイートID
+   * @return
+   */
   def get(tweetId: Long) = Action { implicit request =>
     (for {
       client <- AerospikeService.getClient.right
@@ -104,6 +121,14 @@ class TweetController extends BaseController {
     }
   }
 
+  /**
+   * ツイートレスポンスデータを作成する
+   *
+   * @param user
+   * @param tweet
+   * @tparam A
+   * @return
+   */
   private[this] def getTweetResponseData[A](user: User, tweet: Tweet) = {
     TweetResponseData(
       tweet.id,
