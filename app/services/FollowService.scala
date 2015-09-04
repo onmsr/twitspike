@@ -1,6 +1,8 @@
 package jp.co.dwango.twitspike.services
 
 import com.aerospike.client.AerospikeClient
+import jp.co.dwango.twitspike.controllers.TSMsgTrait
+import jp.co.dwango.twitspike.exceptions.{TwitSpikeExceptionTrait, TwitSpikeException}
 
 /**
  * FollowService
@@ -8,7 +10,10 @@ import com.aerospike.client.AerospikeClient
  * フォローサービス
  *
  */
-class FollowService(_client: AerospikeClient) extends TSAerospikeService {
+class FollowService(_client: AerospikeClient)
+  extends TSAerospikeService
+  with TwitSpikeExceptionTrait
+  with TSMsgTrait {
 
   val client = _client
 
@@ -17,13 +22,23 @@ class FollowService(_client: AerospikeClient) extends TSAerospikeService {
    * 
    * @param userId          フォローするユーザーID
    * @param targetUserId    フォローされるユーザーID
-   * @return boolean
+   * @return
    */
   def create(userId: Long, targetUserId: Long) = {
-    val userCelebs = client.getLargeList(wPolicy, getCelebsKey(userId), "celebs")
-    addToLargeList(userCelebs, targetUserId)
-    val targetUserFans = client.getLargeList(wPolicy, getFansKey(targetUserId), "fans")
-    addToLargeList(targetUserFans, userId)
+    val result1 = (for {
+      userCelebs <- getLargeList(client, wPolicy, getCelebsKey(userId), "celebs").right
+      res <- addToLargeList(userCelebs, targetUserId).right
+    } yield res)
+
+    val result2 = (for {
+      targetUserFans <- getLargeList(client, wPolicy, getFansKey(targetUserId), "fans").right
+      res <- addToLargeList(targetUserFans, userId).right
+    } yield res)
+
+    (result1, result2) match {
+      case (Right(_), Right(_)) => Right(true)
+      case _ => Left(new TwitSpikeException(ALREADY_FOLLOW_ERROR, alreadyFollowErrorMessage))
+    }
   }
 
   /**
@@ -31,13 +46,23 @@ class FollowService(_client: AerospikeClient) extends TSAerospikeService {
    * 
    * @param userId          フォローしているユーザーID
    * @param targetUserId    フォローされているユーザーID
-   * @return boolean
+   * @return
    */
   def delete(userId: Long, targetUserId: Long) = {
-    val userCelebs = client.getLargeList(wPolicy, getCelebsKey(userId), "celebs")
-    removeFromLargeList(userCelebs, targetUserId)
-    val targetUserFans = client.getLargeList(wPolicy, getFansKey(targetUserId), "fans")
-    removeFromLargeList(targetUserFans, userId)
+    val result1 = (for {
+      userCelebs <- getLargeList(client, wPolicy, getCelebsKey(userId), "celebs").right
+      res <- removeFromLargeList(userCelebs, targetUserId).right
+    } yield res)
+
+    val result2 = (for {
+      targetUserFans <- getLargeList(client, wPolicy, getFansKey(targetUserId), "fans").right
+      res <- removeFromLargeList(targetUserFans, userId).right
+    } yield res)
+
+    (result1, result2) match {
+      case (Right(_), Right(_)) => Right(true)
+      case _ => Left(new RuntimeException) // どういうとき起こるのかよくわかんない
+    }
   }
 
   /**
@@ -45,11 +70,13 @@ class FollowService(_client: AerospikeClient) extends TSAerospikeService {
    * 
    * @param srcUserId        ユーザーID
    * @param targetUserId    フォローされているかもしれないユーザーID
-   * @return boolean
+   * @return
    */
   def isFollow(srcUserId: Long, targetUserId: Long) = {
-    val userCelebs = client.getLargeList(wPolicy, getCelebsKey(srcUserId), "celebs")
-    existsInLargeList(userCelebs, targetUserId)
+    (for {
+      userCelebs <- getLargeList(client, wPolicy, getCelebsKey(srcUserId), "celebs").right
+      res <- existsInLargeList(userCelebs, targetUserId)
+    } yield res)
   }
 
   /**
@@ -57,12 +84,13 @@ class FollowService(_client: AerospikeClient) extends TSAerospikeService {
    * 
    * @param targetUserId    ユーザーID
    * @param srcUserId       フォローしているかもしれないユーザーID
-   * @return boolean
+   * @return
    */
   def isFollowed(targetUserId: Long, srcUserId: Long) = {
-    val targetUserFans = client.getLargeList(wPolicy, getFansKey(targetUserId), "fans")
-    existsInLargeList(targetUserFans, srcUserId)
+    (for {
+      targetUserFans <- getLargeList(client, wPolicy, getFansKey(targetUserId), "fans")
+      res <- existsInLargeList(targetUserFans, srcUserId)
+    } yield res)
   }
 
 }
-

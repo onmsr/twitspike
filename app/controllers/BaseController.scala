@@ -6,8 +6,10 @@ import play.api.mvc.Controller
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
-import play.api.libs.json.Json
 
+/**
+ * エラーメッセージ一覧
+ */
 trait TSMsgTrait {
 
   val validationErrorMessage = Play.configuration.getString("ts.msgs.error.validation").get
@@ -18,7 +20,7 @@ trait TSMsgTrait {
   val authFailedErrorMessage = Play.configuration.getString("ts.msgs.error.authFailed").get
   val permissionErrorMessage = Play.configuration.getString("ts.msgs.error.permissionError").get
   val tweetNotFoundErrorMessage = Play.configuration.getString("ts.msgs.error.tweetNotFound").get
-
+  val alreadyFollowErrorMessage = Play.configuration.getString("ts.msgs.error.alreadyFollowFound").get
 }
 
 /**
@@ -28,6 +30,14 @@ trait TSMsgTrait {
  */
 class BaseController extends Controller with TSMsgTrait with TwitSpikeExceptionTrait {
 
+  /**
+   * リクエストデータの取得とバリデーションを行う
+   *
+   * @param form フォーム
+   * @param request リクエスト
+   * @tparam T
+   * @return
+   */
   def getRequestData[T](form: Form[T])(implicit request: play.api.mvc.Request[_]): Either[Exception, T] = {
     val param = form.bindFromRequest
     if (param.hasErrors || param.hasGlobalErrors) {
