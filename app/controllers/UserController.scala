@@ -7,12 +7,10 @@ import jp.co.dwango.twitspike.services.UserService
 import jp.co.dwango.twitspike.validations.UserRequestDataConstraint
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException
 import jp.co.dwango.twitspike.actions.UserAction
-import play.api.data.Form
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import scala.util.control.Exception.allCatch
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException.writes
-import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
 
 /**
  * UserController

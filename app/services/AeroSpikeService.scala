@@ -121,6 +121,10 @@ sealed trait AerospikeServiceTrait {
     allCatch either client.operate(null, key, Operation.add(bin), Operation.get()).getLong("id")
   }
 
+  def getLargeList(client: AerospikeClient, wp: WritePolicy, key: Key, bin: String) = {
+    allCatch either client.getLargeList(wp, key, bin)
+  }
+
   /**
    * ラージオーダードリストにハッシュマップデータを追加する
    */

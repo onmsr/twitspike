@@ -18,7 +18,7 @@ trait TSMsgTrait {
   val authFailedErrorMessage = Play.configuration.getString("ts.msgs.error.authFailed").get
   val permissionErrorMessage = Play.configuration.getString("ts.msgs.error.permissionError").get
   val tweetNotFoundErrorMessage = Play.configuration.getString("ts.msgs.error.tweetNotFound").get
-
+  val alreadyFollowErrorMessage = Play.configuration.getString("ts.msgs.error.alreadyFollowFound").get
 }
 
 /**

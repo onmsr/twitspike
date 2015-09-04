@@ -33,8 +33,13 @@ trait TwitSpikeExceptionTrait {
 
   /**
    * ツイートが見つからない
-   */  
+   */
   val TWEET_NOT_FOUND_ERROR = 1000
+
+  /**
+   * すでにフォローしている
+   */
+  val ALREADY_FOLLOW_ERROR = 1000
 }
 
 object TwitSpikeException extends TwitSpikeExceptionTrait {
