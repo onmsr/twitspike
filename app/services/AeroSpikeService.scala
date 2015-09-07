@@ -183,10 +183,7 @@ sealed trait AerospikeServiceTrait {
    */
   def findFromLargeList(llist: LargeList, v: Long) = {
     import scala.collection.JavaConversions.asScalaBuffer
-    val records = Option(llist.find(Value.get(v)))
-    records.map {
-      allCatch opt _.toList.head
-    } flatten
+    allCatch opt llist.find(Value.get(v)).toList.head
   }
 
   /**

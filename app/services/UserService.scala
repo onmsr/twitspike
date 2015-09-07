@@ -166,7 +166,7 @@ class UserService(_client: AerospikeClient)
   def self(sessionKey: String) = {
     // セッションキーの更新の必要があるかも
     val key = getSessionkeysKey(sessionKey)
-    read(client, key) map { sessionInfo => findOneById(sessionInfo.getLong("user_id")) } flatten
+    read(client, key) flatMap { sessionInfo => findOneById(sessionInfo.getLong("user_id")) }
   }
 
   /**

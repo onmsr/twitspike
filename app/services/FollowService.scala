@@ -25,15 +25,15 @@ class FollowService(_client: AerospikeClient)
    * @return
    */
   def create(userId: Long, targetUserId: Long) = {
-    val result1 = (for {
+    val result1 = for {
       userCelebs <- getLargeList(client, wPolicy, getCelebsKey(userId), "celebs").right
       res <- addToLargeList(userCelebs, targetUserId).right
-    } yield res)
+    } yield res
 
-    val result2 = (for {
+    val result2 = for {
       targetUserFans <- getLargeList(client, wPolicy, getFansKey(targetUserId), "fans").right
       res <- addToLargeList(targetUserFans, userId).right
-    } yield res)
+    } yield res
 
     (result1, result2) match {
       case (Right(_), Right(_)) => Right(true)
@@ -49,15 +49,15 @@ class FollowService(_client: AerospikeClient)
    * @return
    */
   def delete(userId: Long, targetUserId: Long) = {
-    val result1 = (for {
+    val result1 = for {
       userCelebs <- getLargeList(client, wPolicy, getCelebsKey(userId), "celebs").right
       res <- removeFromLargeList(userCelebs, targetUserId).right
-    } yield res)
+    } yield res
 
-    val result2 = (for {
+    val result2 = for {
       targetUserFans <- getLargeList(client, wPolicy, getFansKey(targetUserId), "fans").right
       res <- removeFromLargeList(targetUserFans, userId).right
-    } yield res)
+    } yield res
 
     (result1, result2) match {
       case (Right(_), Right(_)) => Right(true)
@@ -73,10 +73,10 @@ class FollowService(_client: AerospikeClient)
    * @return
    */
   def isFollow(srcUserId: Long, targetUserId: Long) = {
-    (for {
+    for {
       userCelebs <- getLargeList(client, wPolicy, getCelebsKey(srcUserId), "celebs").right
-      res <- existsInLargeList(userCelebs, targetUserId)
-    } yield res)
+      res <- Right(existsInLargeList(userCelebs, targetUserId)).right
+    } yield res
   }
 
   /**
@@ -87,10 +87,10 @@ class FollowService(_client: AerospikeClient)
    * @return
    */
   def isFollowed(targetUserId: Long, srcUserId: Long) = {
-    (for {
-      targetUserFans <- getLargeList(client, wPolicy, getFansKey(targetUserId), "fans")
-      res <- existsInLargeList(targetUserFans, srcUserId)
-    } yield res)
+    for {
+      targetUserFans <- getLargeList(client, wPolicy, getFansKey(targetUserId), "fans").right
+      res <- Right(existsInLargeList(targetUserFans, srcUserId)).right
+    } yield res
   }
 
 }
