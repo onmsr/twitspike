@@ -198,8 +198,9 @@ sealed trait AerospikeServiceTrait {
    */
   def scanLargeList(llist: LargeList) = {
     import scala.collection.JavaConversions.asScalaBuffer
-    val records = llist.scan
-    if (records != null) records.toList else List()
+    import scala.collection.JavaConversions.mapAsScalaMap
+    val records = Option(llist.scan).map(_.toList).getOrElse(List())
+    records.map { v => mapAsScalaMap(v.asInstanceOf[java.util.Map[java.lang.String, java.lang.Object]]) }
   }
 
 }

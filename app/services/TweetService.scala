@@ -38,6 +38,8 @@ class TweetService(_client: AerospikeClient)
       ts <- Right(new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)).right
       _ <- createTweet(userId, id, content, ts).right
       _ <- addUserTweets(userId, id, ts).right
+      _ <- Right(updateTimeline(userId, id, ts)).right
+      _ <- Right(updateFansTimeline(userId, id, ts)).right
     } yield id
   }
 
@@ -64,6 +66,28 @@ class TweetService(_client: AerospikeClient)
     val time = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(ts).getMillis()
     val map = Map("key" -> time, "tweetId" -> id)
     addToLargeList(llist, map)
+  }
+
+  /**
+   * 指定したユーザーのタイムラインにツイートIDを追加する
+   */
+  private[this] def updateTimeline(userId: Long, id: Long, ts: String) = {
+    val key = getTimelinesKey(userId)
+    val llist = client.getLargeList(wPolicy, key, "timeline")
+
+    val time = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(ts).getMillis()
+    val map = Map("key" -> time, "tweetId" -> id)
+    addToLargeList(llist, map).isRight
+  }
+
+  /**
+   * 指定したユーザーのフォロワーのタイムラインにツイートIDを追加する
+   */
+  private[this] def updateFansTimeline(userId: Long, id: Long, ts: String) = {
+    // 本来なら非同期にしたほうが良い
+    val us = new UserService(client)
+    val fans = us.findFanIds(userId)
+    fans.map { updateTimeline(_, id, ts) }
   }
 
   /**
