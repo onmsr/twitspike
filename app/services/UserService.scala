@@ -111,12 +111,26 @@ class UserService(_client: AerospikeClient)
   }
 
   /**
-   * ユーザーのタイムラインを取得する。愚直に全部合成版
+   * ユーザーのタイムラインを取得する。
    *
    * @param userId ユーザーID
    * @return
    */
   def findTimeline(userId: Long) = {
+    for {
+      timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
+      tweetIds <- Right(scanLargeList(timeline).map { _.get("tweetId").get.asInstanceOf[Long] }).right
+      tweets <- Right(new TweetService(client).findByIds(tweetIds)).right
+    } yield tweets
+  }
+
+  /**
+   * ユーザーのタイムラインを取得する。愚直に全部合成版
+   *
+   * @param userId ユーザーID
+   * @return
+   */
+  def findTimelineSimple(userId: Long) = {
     val celebIds = findCelebIds(userId)
     val ts = new TweetService(client)
     val tweetIds = (userId :: celebIds).map(ts.findIds(_)).flatten

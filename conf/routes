@@ -3,17 +3,16 @@
 # ~~~~
 
 # ユーザー関連API
-GET     /                           jp.co.dwango.twitspike.controllers.UserController.index
 POST    /users                      jp.co.dwango.twitspike.controllers.UserController.post()
 DELETE  /users/:userId              jp.co.dwango.twitspike.controllers.UserController.delete(userId: Long)
 GET     /users/self                 jp.co.dwango.twitspike.controllers.UserController.self()
 GET     /users/:userId              jp.co.dwango.twitspike.controllers.UserController.get(userId: Long)
-GET     /users                      jp.co.dwango.twitspike.controllers.UserController.list()
+# GET     /users                      jp.co.dwango.twitspike.controllers.UserController.list()
 POST    /users/auth                 jp.co.dwango.twitspike.controllers.UserController.auth()
 
-GET     /users/:userId/fans         jp.co.dwango.twitspike.controllers.UserController.fans(userId: Long)
-GET     /users/:userId/celebs       jp.co.dwango.twitspike.controllers.UserController.celebs(userId: Long)
-GET     /users/:userId/tweets       jp.co.dwango.twitspike.controllers.UserController.tweets(userId: Long)
+# GET     /users/:userId/fans         jp.co.dwango.twitspike.controllers.UserController.fans(userId: Long)
+# GET     /users/:userId/celebs       jp.co.dwango.twitspike.controllers.UserController.celebs(userId: Long)
+# GET     /users/:userId/tweets       jp.co.dwango.twitspike.controllers.UserController.tweets(userId: Long)
 GET     /users/:userId/timeline     jp.co.dwango.twitspike.controllers.UserController.timeline(userId: Long)
 
 # ツイート関連API

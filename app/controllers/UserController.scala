@@ -1,7 +1,9 @@
 package jp.co.dwango.twitspike.controllers
 
 import jp.co.dwango.twitspike.models.User
+import jp.co.dwango.twitspike.models.Tweet
 import jp.co.dwango.twitspike.models.response.UserResponseData
+import jp.co.dwango.twitspike.models.response.TweetResponseData
 import jp.co.dwango.twitspike.services.AerospikeService
 import jp.co.dwango.twitspike.services.UserService
 import jp.co.dwango.twitspike.validations.UserRequestDataConstraint
@@ -18,8 +20,6 @@ import jp.co.dwango.twitspike.exceptions.TwitSpikeException.writes
  * ユーザー関連のAPIを管理するコントローラー
  */
 class UserController extends BaseController {
-
-  def index = TODO
 
   /**
    * ユーザーの登録を行う
@@ -172,7 +172,50 @@ class UserController extends BaseController {
 
   def tweets(userId: Long) = TODO
 
-  def timeline(userId: Long) = TODO
+  /**
+   * 指定したユーザーのタイムラインを取得する
+   *
+   * @return
+   */
+  def timeline(userId: Long) = Action { implicit request =>
+    (for {
+      client <- AerospikeService.getClient.right
+      tweets <- new UserService(client).findTimeline(userId).right
+      users <- Right(new UserService(client).findByIds(getTweetsUserIds(tweets))).right
+      timeline <- Right(getTimelineResponseData(tweets zip users)).right
+      _ <- (allCatch either client.close).right
+    } yield timeline) match {
+      case Left(e) => {
+        e match {
+          case TwitSpikeException(USER_NOT_FOUND_ERROR, _) => NotFound(Json.obj("error" -> Json.toJson(e.asInstanceOf[TwitSpikeException])))
+          case _ => InternalServerError(Json.obj("error" -> internalServerErrorMessage))
+        }
+      }
+      case Right(timeline) => Ok(Json.obj("timeline" -> timeline))
+    }
+  }
+
+  /**
+   *  ツイート一覧からユーザーID一覧を取得
+   */
+  private[this] def getTweetsUserIds(tweets: List[Tweet]) = tweets.map { _.userId }
+
+  /**
+   * ツイートレスポンスデータの作成
+   *
+   * @return
+   */
+  private[this] def getTimelineResponseData[A](timeline: List[(Tweet, User)]) = {
+    timeline.map { case (t, u) =>
+      TweetResponseData(
+        t.id,
+        t.content,
+        t.createdAt,
+        u.id,
+        u.nickname
+      )
+    }
+  }
 
   /**
    * ユーザーレスポンスデータの作成
