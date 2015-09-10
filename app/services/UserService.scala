@@ -1,7 +1,6 @@
 package jp.co.dwango.twitspike.services
 
-import com.aerospike.client.AerospikeClient
-import com.aerospike.client.Bin
+import com.aerospike.client.{AerospikeClient, Bin}
 import java.util.UUID
 import jp.co.dwango.twitspike.models.User
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException
@@ -116,7 +115,25 @@ class UserService(_client: AerospikeClient)
    * @param userId ユーザーID
    * @return
    */
-  def findTimeline(userId: Long) = {
+  def findTimeline(userId: Long, count: Int, start: Option[Long], endFilter: Option[Long]) = {
+    val s = start.getOrElse(System.currentTimeMillis)
+    val e = endFilter.getOrElse(0L)
+    for {
+      timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
+      tweetMaps <- findRecordsFromLargeList(timeline, -s, count).right
+      filteredTweetMaps <- Right(tweetMaps.filter(_.get("key").get.asInstanceOf[Long] <= -e)).right
+      tweetIds <- Right(filteredTweetMaps.map(_.get("tweetId").get.asInstanceOf[Long])).right
+      tweets <- Right(new TweetService(client).findByIds(tweetIds)).right
+    } yield tweets
+  }
+
+  /**
+   * ユーザーのタイムラインを取得する。
+   *
+   * @param userId ユーザーID
+   * @return
+   */
+  def findTimelineAll(userId: Long) = {
     for {
       timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
       tweetIds <- Right(scanLargeList(timeline).map { _.get("tweetId").get.asInstanceOf[Long] }).right

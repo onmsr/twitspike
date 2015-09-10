@@ -1,11 +1,12 @@
 package jp.co.dwango.twitspike.controllers
 
+import com.aerospike.client.AerospikeClient
 import jp.co.dwango.twitspike.models.User
 import jp.co.dwango.twitspike.models.Tweet
 import jp.co.dwango.twitspike.models.response.UserResponseData
 import jp.co.dwango.twitspike.models.response.TweetResponseData
-import jp.co.dwango.twitspike.services.AerospikeService
-import jp.co.dwango.twitspike.services.UserService
+import jp.co.dwango.twitspike.services.{TweetService, AerospikeService, UserService}
+import jp.co.dwango.twitspike.utils.TimeUtil
 import jp.co.dwango.twitspike.validations.UserRequestDataConstraint
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException
 import jp.co.dwango.twitspike.actions.UserAction
@@ -177,10 +178,13 @@ class UserController extends BaseController {
    *
    * @return
    */
-  def timeline(userId: Long) = Action { implicit request =>
+  def timeline(userId: Long, count: Int, cursor: Option[Long], maxId: Option[Long], sinceId: Option[Long], until: Option[String], since: Option[String]) = Action { implicit request =>
     (for {
       client <- AerospikeService.getClient.right
-      tweets <- new UserService(client).findTimeline(userId).right
+      user <- new UserService(client).findOneById(userId).toRight(
+        new TwitSpikeException(USER_NOT_FOUND_ERROR, userNotFoundErrorMessage)).right
+      query <- Right(buildQuery(client, count, cursor, maxId, sinceId, until, since)).right
+      tweets <- new UserService(client).findTimeline(userId, query._1, query._2, query._3).right
       users <- Right(new UserService(client).findByIds(getTweetsUserIds(tweets))).right
       timeline <- Right(getTimelineResponseData(tweets zip users)).right
       _ <- (allCatch either client.close).right
@@ -193,6 +197,41 @@ class UserController extends BaseController {
       }
       case Right(timeline) => Ok(Json.obj("timeline" -> timeline))
     }
+  }
+
+  private[this] def getCreatedAtByTweetId(client: AerospikeClient, tweetId: Long) = {
+    new TweetService(client).findOneById(tweetId).map { _.createdAt }
+  }
+
+  /**
+   * 検索の取得個数と開始位置と終了位置を生成する
+   * cursor・maxId・sinceIdはツイートID, until・sinceはタイムスタンプ
+   * 基本的にスタート位置がありそこからcount件取得して終了条件からフィルターされるかんじ
+   *
+   * @param client
+   * @param count
+   * @param cursor
+   * @param maxId
+   * @param sinceId
+   * @param until
+   * @param since
+   * @return (取得件数, 開始位置, 終了位置)
+   */
+  private[this] def buildQuery(client: AerospikeClient, count: Int, cursor: Option[Long], maxId: Option[Long], sinceId: Option[Long], until: Option[String], since: Option[String]) = {
+    // since and until -> milli second
+    val sinceMillis = since.flatMap { TimeUtil.timestampToMillis(_) }
+    val untilMillis = until.flatMap { TimeUtil.timestampToMillis(_) }
+
+    // sinceId and maxId -> tweet createdAt timestamp -> milli second
+    val sinceIdMillis = sinceId.flatMap { getCreatedAtByTweetId(client, _) } flatMap { TimeUtil.timestampToMillis(_) }
+    val maxIdMillis = maxId.flatMap { getCreatedAtByTweetId(client, _) } flatMap { TimeUtil.timestampToMillis(_) }
+
+    val starts = List(cursor, maxIdMillis, untilMillis).flatMap { v => v }
+    val start = allCatch opt starts.head
+    val endFilters = List(sinceIdMillis, sinceMillis).flatMap { v => v }
+    val endFilter = allCatch opt endFilters.head
+
+    (count, start, endFilter)
   }
 
   /**
