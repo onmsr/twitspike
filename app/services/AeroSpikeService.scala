@@ -187,6 +187,19 @@ sealed trait AerospikeServiceTrait {
   }
 
   /**
+   * ラージオーダードリストからデータを取得する
+   */
+  def findRecordsFromLargeList(llist: LargeList, v: Long, count: Int) = {
+    import scala.collection.JavaConversions.asScalaBuffer
+    import scala.collection.JavaConversions.mapAsScalaMap
+    for {
+      javaRecords <- (allCatch either llist.findFrom(Value.get(v), count)).right
+      records <- Right(Option(javaRecords).map(_.toList).getOrElse(List())).right
+      res <- Right(records.map { v => mapAsScalaMap(v.asInstanceOf[java.util.Map[java.lang.String, java.lang.Object]]) }).right
+    } yield res
+  }
+
+  /**
    * ラージオーダードリストにデータが存在するかどうか調べる
    */
   def existsInLargeList(llist: LargeList, v: Long) = {

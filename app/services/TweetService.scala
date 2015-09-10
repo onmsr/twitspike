@@ -76,7 +76,7 @@ class TweetService(_client: AerospikeClient)
     val llist = client.getLargeList(wPolicy, key, "timeline")
 
     val time = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(ts).getMillis()
-    val map = Map("key" -> time, "tweetId" -> id)
+    val map = Map("key" -> -time, "tweetId" -> id) // ラージオーダードリストで逆順にするために符号を反転する
     addToLargeList(llist, map).isRight
   }
 
