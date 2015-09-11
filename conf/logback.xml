@@ -2,21 +2,61 @@
     
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
 
+  <!-- appenders -->
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>%coloredLevel - %logger - %message%n%xException</pattern>
     </encoder>
   </appender>
 
-  <!--
-    The logger name is typically the Java/Scala package name.
-    This configures the log level to log at for a package and its children packages.
-  -->
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>${application.home}/logs/application.log</file>
+    <encoder>
+      <pattern>* %date{yyyy-MM-dd HH:mm:ss ZZZZ} - [%level] - from %logger in %thread %n%message%n%xException%n%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="ACCESS_FILE" class="ch.qos.logback.core.FileAppender">
+    <file>${application.home}/logs/access.log</file>
+    <encoder>
+      <pattern>%date{yyyy-MM-dd HH:mm:ss ZZZZ} %message%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="ERROR_FILE" class="ch.qos.logback.core.FileAppender">
+    <file>${application.home}/logs/error.log</file>
+    <encoder>
+      <pattern>* %date{yyyy-MM-dd HH:mm:ss ZZZZ} - [%level] - from %logger in %thread %n%message%n%xException%n%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- loggers -->
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
 
+  <logger name="play" level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
+  <logger name="application" level="DEBUG">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="FILE"/>
+  </logger>
+
+  <logger name="access" level="INFO">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="ACCESS_FILE"/>
+  </logger>
+
+  <logger name="error" level="ERROR">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="ERROR_FILE"/>
+  </logger>
+
+  <!-- root -->
   <root level="ERROR">
-    <appender-ref ref="STDOUT" />
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="FILE"/>
   </root>
 
 </configuration>

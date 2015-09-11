@@ -16,7 +16,7 @@ import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
 import scala.util.control.Exception.allCatch
-import play.api.Play
+import play.api.{Logger, Play}
 import play.api.Play.current
 import scala.collection.JavaConversions.mapAsJavaMap
 
@@ -47,6 +47,7 @@ sealed trait AerospikeServiceTrait {
       case Success(v) => Option(v)
       case Failure(e) => {
         // @TODO output log
+        Logger("error").error("AerospikeService read error : ", e)
         None
       }
     }
@@ -102,6 +103,7 @@ sealed trait AerospikeServiceTrait {
       case Success(_) => Right(true)
       case Failure(e) => {
         // @TODO output log
+        Logger("error").error("AerospikeService write error : ", e)
         Left(e)
       }
     }
@@ -119,6 +121,7 @@ sealed trait AerospikeServiceTrait {
       case Success(v) => Right(v)
       case Failure(e) => {
         // @TODO output log
+        Logger("error").error("AerospikeService remove error : ", e)
         Left(e)
       }
     }
