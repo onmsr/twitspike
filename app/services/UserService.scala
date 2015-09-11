@@ -9,6 +9,7 @@ import jp.co.dwango.twitspike.controllers.TSMsgTrait
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.mindrot.jbcrypt.BCrypt
+import scala.util.control.Exception.allCatch
 
 /**
  * UserService
@@ -250,6 +251,31 @@ class UserService(_client: AerospikeClient)
     val userIdBin = new Bin("user_id", userId)
     val key = getNicknamesKey(nickname)
     write(client, key, Array(userIdBin))
+  }
+
+  /**
+   * タイムラインのツイート数がN+MARGIN件を超えていればN件まで古いツイートを削除する
+   *
+   * @param userId
+   * @param n
+   * @param margin
+   */
+  def sweepTimeline(userId: Long, n: Int, margin: Int) = {
+    (for {
+      timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
+      size <- (allCatch either timeline.size).right
+      _ <- (if (size < n + margin) Left(false) else Right(true)).right // check size > n+margin
+      records <- (allCatch either timeline.findLast(size-n)).right // get remove data
+      result <- (allCatch either timeline.remove(records)).right // remove data
+    } yield result) match {
+      case Left(e) => {
+        e match {
+          case false => Right(false)
+          case _ => Left(e)
+        }
+      }
+      case Right(result) => Right(result)
+    }
   }
 
 }

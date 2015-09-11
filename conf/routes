@@ -13,7 +13,7 @@ POST    /users/auth                 jp.co.dwango.twitspike.controllers.UserContr
 # GET     /users/:userId/fans         jp.co.dwango.twitspike.controllers.UserController.fans(userId: Long)
 # GET     /users/:userId/celebs       jp.co.dwango.twitspike.controllers.UserController.celebs(userId: Long)
 # GET     /users/:userId/tweets       jp.co.dwango.twitspike.controllers.UserController.tweets(userId: Long)
-GET     /users/:userId/timeline     jp.co.dwango.twitspike.controllers.UserController.timeline(userId: Long, count: Int ?= 5, cursor: Option[Long], max_id: Option[Long], since_id: Option[Long], until: Option[String], since: Option[String])
+GET     /users/:userId/timeline     jp.co.dwango.twitspike.controllers.UserController.timeline(userId: Long, count: Int ?= 20, cursor: Option[Long], max_id: Option[Long], since_id: Option[Long], until: Option[String], since: Option[String])
 
 # ツイート関連API
 POST    /tweets                     jp.co.dwango.twitspike.controllers.TweetController.post()

@@ -183,7 +183,7 @@ class UserController extends BaseController {
       client <- AerospikeService.getClient.right
       user <- new UserService(client).findOneById(userId).toRight(
         new TwitSpikeException(USER_NOT_FOUND_ERROR, userNotFoundErrorMessage)).right
-      query <- Right(buildQuery(client, count, cursor, maxId, sinceId, until, since)).right
+      query <- buildQuery(client, count, cursor, maxId, sinceId, until, since).right
       tweets <- new UserService(client).findTimeline(userId, query._1, query._2, query._3).right
       users <- Right(new UserService(client).findByIds(getTweetsUserIds(tweets))).right
       timeline <- Right(getTimelineResponseData(tweets zip users)).right
@@ -231,7 +231,11 @@ class UserController extends BaseController {
     val endFilters = List(sinceIdMillis, sinceMillis).flatMap { v => v }
     val endFilter = allCatch opt endFilters.head
 
-    (count, start, endFilter)
+    if (count >= 0 && count <= 200) {
+      Right((count, start, endFilter))
+    } else {
+      Left(new TwitSpikeException(VALIDATIONS_ERROR, "取得件数の指定が間違っています"))
+    }
   }
 
   /**
