@@ -34,7 +34,7 @@ trait TwitSpikeExceptionTrait {
   /**
    * サーバーサイドエラー
    */
-  val INTERNAL_SERVER_ERROR = 1003
+  val TS_INTERNAL_SERVER_ERROR = 1003
 
   /**
    * バリデーションエラー

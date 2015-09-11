@@ -37,7 +37,7 @@ object Global extends BaseGlobal {
   override def onError(request: RequestHeader, e: Throwable) = {
     Logger.info("internal server error")
     Future.successful(Results.InternalServerError(
-      Json.obj("error" -> Json.toJson(new TwitSpikeException(TwitSpikeException.INTERNAL_SERVER_ERROR, TSMsg.internalServerErrorMessage)))
+      Json.obj("error" -> Json.toJson(new TwitSpikeException(TwitSpikeException.TS_INTERNAL_SERVER_ERROR, TSMsg.internalServerErrorMessage)))
     ))
   }
 
