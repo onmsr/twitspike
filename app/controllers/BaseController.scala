@@ -23,6 +23,7 @@ trait TSMsgTrait {
   val alreadyFollowErrorMessage = Play.configuration.getString("ts.msgs.error.alreadyFollowFound").get
   val notFoundErrorMessage = Play.configuration.getString("ts.msgs.error.notFound").get
   val badRequestErrorMessage = Play.configuration.getString("ts.msgs.error.badRequest").get
+  val emailAlreadyRegisterdErrorMessage = Play.configuration.getString("ts.msgs.error.emailAlreadyRegisterd").get
 
 }
 

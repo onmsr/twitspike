@@ -42,7 +42,14 @@ class UserService(_client: AerospikeClient)
    * @return
    */
   def create(name: String, nickname: String, email: String, description: String, rawPassword: String) = {
+    // メールアドレスがすでに利用されているか確認
+    val checkEmailAlreadyUsed = read(client, getAuthenticationsKey(email)) match {
+      case Some(authInfo) => Left(new TwitSpikeException(EMAIL_ALREADY_REGISTERD_ERROR, emailAlreadyRegisterdErrorMessage))
+      case None => Right(true)
+    }
+
     for {
+      _ <- checkEmailAlreadyUsed.right
       id <- nextId.right
       password <- Right(BCrypt.hashpw(rawPassword, BCrypt.gensalt(12))).right
       _ <- createUser(id, name, nickname, email, description).right

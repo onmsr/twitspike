@@ -37,6 +37,11 @@ trait TwitSpikeExceptionTrait {
   val TS_INTERNAL_SERVER_ERROR = 1003
 
   /**
+   * メールアドレスがすでに利用されている
+   */
+  val EMAIL_ALREADY_REGISTERD_ERROR = 1004
+
+  /**
    * バリデーションエラー
    */  
   val VALIDATIONS_ERROR = 2000
@@ -54,17 +59,17 @@ trait TwitSpikeExceptionTrait {
   /**
    * 認証に失敗した。認証ユーザーは存在するが、パスワードが一致しない
    */
-  val AUTH_FAILED_ERROR = 2002
+  val AUTH_FAILED_ERROR = 2003
 
   /**
    * ツイートが見つからない
    */
-  val TWEET_NOT_FOUND_ERROR = 1000
+  val TWEET_NOT_FOUND_ERROR = 2004
 
   /**
    * すでにフォローしている
    */
-  val ALREADY_FOLLOW_ERROR = 1000
+  val ALREADY_FOLLOW_ERROR = 2005
 }
 
 object TwitSpikeException extends TwitSpikeExceptionTrait {

@@ -37,6 +37,7 @@ class UserController extends BaseController {
       case Left(e) => {
         e match {
           case TwitSpikeException(VALIDATIONS_ERROR, _) => BadRequest(Json.obj("error" -> Json.toJson(e.asInstanceOf[TwitSpikeException])))
+          case TwitSpikeException(EMAIL_ALREADY_REGISTERD_ERROR, _) => BadRequest(Json.obj("error" -> Json.toJson(e.asInstanceOf[TwitSpikeException])))
           case _ => InternalServerError(Json.obj("error" -> internalServerErrorMessage))
         }
       }
