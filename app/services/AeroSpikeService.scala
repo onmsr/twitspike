@@ -16,6 +16,7 @@ import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
 import scala.util.control.Exception.allCatch
+import jp.co.dwango.twitspike.globals.GlobalInfo
 import play.api.{Logger, Play}
 import play.api.Play.current
 import scala.collection.JavaConversions.mapAsJavaMap
@@ -225,15 +226,13 @@ class AerospikeService extends AerospikeServiceTrait {
 
 }
 
-object AerospikeService {
-
-  val serverUrl = Play.configuration.getString("ts.asServer1").get
+object AerospikeService extends AerospikeService {
 
   /**
    * Aerospikeクライアントを取得する
    */
   def getClient = {
-    allCatch either new AerospikeClient(serverUrl, 3000)
+    allCatch either new AerospikeClient(GlobalInfo.serverUrl, 3000)
   }
 
 }

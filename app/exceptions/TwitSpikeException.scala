@@ -22,6 +22,21 @@ trait TwitSpikeExceptionTrait {
   val USER_NOT_FOUND_ERROR = 1000
 
   /**
+   * 指定したURLが見つからない
+   */
+  val NOT_FOUND_ERROR = 1001
+
+  /**
+   * リクエストが間違っている
+   */
+  val BAD_REQUEST_ERROR = 1002
+
+  /**
+   * サーバーサイドエラー
+   */
+  val INTERNAL_SERVER_ERROR = 1003
+
+  /**
    * バリデーションエラー
    */  
   val VALIDATIONS_ERROR = 2000
