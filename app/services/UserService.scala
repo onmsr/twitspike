@@ -178,6 +178,7 @@ class UserService(_client: AerospikeClient)
       case Right((isAuth, authInfo)) => {
         if (isAuth) {
           // 認証成功 + セッションキー発行
+          wPolicy.expiration = 7*86400 // 7days
           val id = authInfo.getLong("user_id")
           val sessionKey = UUID.randomUUID().toString
           val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
@@ -187,6 +188,7 @@ class UserService(_client: AerospikeClient)
           val timestampBin = new Bin("timestamp", ts)
 
           write(client, getSessionkeysKey(sessionKey), Array(userIdBin, sessionKeyBin, timestampBin))
+          wPolicy.expiration = 0
           Right(sessionKey)
         } else {
           Left(new TwitSpikeException(AUTH_FAILED_ERROR, authFailedErrorMessage))
