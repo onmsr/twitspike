@@ -275,8 +275,8 @@ class UserService(_client: AerospikeClient)
       size <- (allCatch either timeline.size).right
       _ <- (if (size < n + margin) Left(false) else Right(true)).right // check size > n+margin
       records <- (allCatch either timeline.findLast(size-n)).right // get remove data
-      result <- (allCatch either timeline.remove(records)).right // remove data
-    } yield result) match {
+      _ <- (allCatch either timeline.remove(records)).right // remove data
+    } yield true) match {
       case Left(e) => {
         e match {
           case false => Right(false)
