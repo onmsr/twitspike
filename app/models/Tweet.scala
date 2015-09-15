@@ -10,7 +10,7 @@ case class Tweet(
   userId: Long,
   content: String,
   createdAt: String
-)
+  )
 
 object Tweet {
   implicit def tweetRecordMapToTweet[A](m: Map[String, Object]) = {

@@ -1,15 +1,16 @@
 package jp.co.dwango.twitspike.services
 
-import com.aerospike.client.{AerospikeClient, Bin}
 import java.util.UUID
-import jp.co.dwango.twitspike.models.User
-import jp.co.dwango.twitspike.exceptions.TwitSpikeException
-import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
+
+import scala.util.control.Exception.allCatch
+
+import com.aerospike.client.{AerospikeClient, Bin}
 import jp.co.dwango.twitspike.controllers.TSMsgTrait
+import jp.co.dwango.twitspike.exceptions.{TwitSpikeException, TwitSpikeExceptionTrait}
+import jp.co.dwango.twitspike.models.User
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.mindrot.jbcrypt.BCrypt
-import scala.util.control.Exception.allCatch
 
 /**
  * UserService
@@ -18,22 +19,22 @@ import scala.util.control.Exception.allCatch
  *
  */
 class UserService(_client: AerospikeClient)
-    extends TSAerospikeService
-    with TwitSpikeExceptionTrait
-    with TSMsgTrait {
+  extends TSAerospikeService
+  with TwitSpikeExceptionTrait
+  with TSMsgTrait {
 
   val client = _client
 
   /**
    * 次のユーザーIDを取得する
-   * 
+   *
    * @return 新しいユーザーID
    */
   def nextId = createNextId(client, ns, "user_last_id")
 
   /**
    * ユーザーレコードを作成する
-   * 
+   *
    * @param name          ユーザー名
    * @param nickname      ユーザーのニックネーム
    * @param email         メールアドレス
@@ -164,7 +165,7 @@ class UserService(_client: AerospikeClient)
 
   /**
    * ユーザーの認証を行う。成功した場合はセッションキーが作成される。
-   * 
+   *
    * @param email       メールアドレス
    * @param rawPassword パスワード
    * @return セッションキー
@@ -178,7 +179,7 @@ class UserService(_client: AerospikeClient)
       case Right((isAuth, authInfo)) => {
         if (isAuth) {
           // 認証成功 + セッションキー発行
-          wPolicy.expiration = 7*86400 // 7days
+          wPolicy.expiration = 7 * 86400 // 7days
           val id = authInfo.getLong("user_id")
           val sessionKey = UUID.randomUUID().toString
           val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
@@ -200,7 +201,7 @@ class UserService(_client: AerospikeClient)
 
   /**
    * セッションキーからユーザー情報を取得する。
-   * 
+   *
    * @param sessionKey セッションキー
    * @return Userオブジェクト
    */
@@ -212,7 +213,7 @@ class UserService(_client: AerospikeClient)
 
   /**
    * ユーザーレコード作成
-   * 
+   *
    * @param name          ユーザー名
    * @param nickname      ユーザーのニックネーム
    * @param email         メールアドレス
@@ -236,7 +237,7 @@ class UserService(_client: AerospikeClient)
 
   /**
    * 認証情報の作成
-   * 
+   *
    * @param userId    ユーザーID
    * @param email     メールアドレス
    * @param password  ハッシュ化されたパスワード
@@ -251,7 +252,7 @@ class UserService(_client: AerospikeClient)
 
   /**
    * ニックネーム情報の作成
-   * 
+   *
    * @param userId    ユーザーID
    * @param nickname  ニックネーム
    * @return
@@ -274,7 +275,7 @@ class UserService(_client: AerospikeClient)
       timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
       size <- (allCatch either timeline.size).right
       _ <- (if (size < n + margin) Left(false) else Right(true)).right // check size > n+margin
-      records <- (allCatch either timeline.findLast(size-n)).right // get remove data
+      records <- (allCatch either timeline.findLast(size - n)).right // get remove data
       _ <- (allCatch either timeline.remove(records)).right // remove data
     } yield true) match {
       case Left(e) => {

@@ -1,13 +1,11 @@
 package jp.co.dwango.twitspike.services
 
-import com.aerospike.client.AerospikeClient
-import com.aerospike.client.Bin
+import com.aerospike.client.{AerospikeClient, Bin}
+import jp.co.dwango.twitspike.controllers.TSMsgTrait
+import jp.co.dwango.twitspike.exceptions.{TwitSpikeException, TwitSpikeExceptionTrait}
 import jp.co.dwango.twitspike.models.Tweet
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import jp.co.dwango.twitspike.exceptions.TwitSpikeException
-import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
-import jp.co.dwango.twitspike.controllers.TSMsgTrait
 
 /**
  * TweetService
@@ -16,15 +14,15 @@ import jp.co.dwango.twitspike.controllers.TSMsgTrait
  *
  */
 class TweetService(_client: AerospikeClient)
-    extends TSAerospikeService
-    with TwitSpikeExceptionTrait
-    with TSMsgTrait {
+  extends TSAerospikeService
+  with TwitSpikeExceptionTrait
+  with TSMsgTrait {
 
   val client = _client
 
   /**
    * 次のツイートIDを取得する
-   * 
+   *
    * @return 新しいツイートID
    */
   def nextId = createNextId(client, ns, "tweet_last_id")

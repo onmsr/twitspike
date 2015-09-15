@@ -1,19 +1,18 @@
 package jp.co.dwango.twitspike.controllers
 
+import scala.util.control.Exception.allCatch
+
 import com.aerospike.client.AerospikeClient
-import jp.co.dwango.twitspike.models.User
-import jp.co.dwango.twitspike.models.Tweet
-import jp.co.dwango.twitspike.models.response.UserResponseData
-import jp.co.dwango.twitspike.models.response.TweetResponseData
-import jp.co.dwango.twitspike.services.{TweetService, AerospikeService, UserService}
+import jp.co.dwango.twitspike.actions.UserAction
+import jp.co.dwango.twitspike.exceptions.TwitSpikeException
+import jp.co.dwango.twitspike.exceptions.TwitSpikeException.writes
+import jp.co.dwango.twitspike.models.{Tweet, User}
+import jp.co.dwango.twitspike.models.response.{TweetResponseData, UserResponseData}
+import jp.co.dwango.twitspike.services.{AerospikeService, TweetService, UserService}
 import jp.co.dwango.twitspike.utils.TimeUtil
 import jp.co.dwango.twitspike.validations.UserRequestDataConstraint
-import jp.co.dwango.twitspike.exceptions.TwitSpikeException
-import jp.co.dwango.twitspike.actions.UserAction
 import play.api.libs.json.Json
 import play.api.mvc.Action
-import scala.util.control.Exception.allCatch
-import jp.co.dwango.twitspike.exceptions.TwitSpikeException.writes
 
 /**
  * UserController

@@ -1,10 +1,10 @@
 package jp.co.dwango.twitspike.filters
 
-import play.api.Logger
-import play.api.mvc._
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
+import play.api.Logger
+import play.api.mvc._
 
 object AccessLoggingFilter extends Filter {
 

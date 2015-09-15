@@ -1,9 +1,8 @@
 package jp.co.dwango.twitspike.validations
 
+import jp.co.dwango.twitspike.models.request.{AuthRequestData, PostUserRequestData}
 import play.api.data.Form
 import play.api.data.Forms._
-import jp.co.dwango.twitspike.models.request.PostUserRequestData
-import jp.co.dwango.twitspike.models.request.AuthRequestData
 
 object UserRequestDataConstraint {
   val post = Form(
