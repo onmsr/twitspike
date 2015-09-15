@@ -35,9 +35,12 @@ class TweetService(_client: AerospikeClient)
   def create(userId: Long, content: String) = {
     for {
       id <- nextId.right
-      ts <- Right(new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)).right
+      now <- Right(System.currentTimeMillis()).right
+      ts <- Right(new DateTime(now).toString(ISODateTimeFormat.dateTimeNoMillis)).right
       _ <- createTweet(userId, id, content, ts).right
-      _ <- addUserTweets(userId, id, ts).right
+      _ <- addUserTweets(userId, id, now).right
+      _ <- Right(updateTimeline(userId, id, now)).right
+      _ <- Right(updateFansTimeline(userId, id, now)).right
     } yield id
   }
 
@@ -57,13 +60,33 @@ class TweetService(_client: AerospikeClient)
   /**
    * ユーザーとツイートの関係情報の保存を行う
    */
-  private[this] def addUserTweets(userId: Long, id: Long, ts: String) = {
+  private[this] def addUserTweets(userId: Long, id: Long, time: Long) = {
     val key = getUserTweetsKey(userId)
     val llist = client.getLargeList(wPolicy, key, "tweets")
 
-    val time = ISODateTimeFormat.dateTimeNoMillis().parseDateTime(ts).getMillis()
     val map = Map("key" -> time, "tweetId" -> id)
     addToLargeList(llist, map)
+  }
+
+  /**
+   * 指定したユーザーのタイムラインにツイートIDを追加する
+   */
+  private[this] def updateTimeline(userId: Long, id: Long, time: Long) = {
+    val key = getTimelinesKey(userId)
+    val llist = client.getLargeList(wPolicy, key, "timeline")
+
+    val map = Map("key" -> -time, "tweetId" -> id) // ラージオーダードリストで逆順にするために符号を反転する
+    addToLargeList(llist, map).isRight
+  }
+
+  /**
+   * 指定したユーザーのフォロワーのタイムラインにツイートIDを追加する
+   */
+  private[this] def updateFansTimeline(userId: Long, id: Long, time: Long) = {
+    // 本来なら非同期にしたほうが良い
+    val us = new UserService(client)
+    val fans = us.findFanIds(userId)
+    fans.map { updateTimeline(_, id, time) }
   }
 
   /**
@@ -108,7 +131,7 @@ class TweetService(_client: AerospikeClient)
   def findIds(userId: Long) = {
     val key = getUserTweetsKey(userId)
     val llist = client.getLargeList(wPolicy, key, "tweets")
-    scanLargeList(llist).asInstanceOf[List[Long]]
+    scanMapLargeList(llist).asInstanceOf[List[Long]]
   }
 
 }

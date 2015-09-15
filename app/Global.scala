@@ -1,10 +1,25 @@
 package jp.co.dwango.twitspike.globals
 
-import play.api.{Application, Logger, GlobalSettings}
-import play.api.mvc.{Handler, RequestHeader, Results}
 import scala.concurrent.Future
 
-object Global extends GlobalSettings {
+import jp.co.dwango.twitspike.actions.UserAction
+import jp.co.dwango.twitspike.controllers.TSMsg
+import jp.co.dwango.twitspike.exceptions.TwitSpikeException
+import jp.co.dwango.twitspike.filters.AccessLoggingFilter
+import play.Play
+import play.api.libs.json.Json
+import play.api.mvc.{Handler, RequestHeader, Results, WithFilters}
+import play.api.{Application, GlobalSettings, Logger}
+
+object GlobalInfo {
+  val debug = Play.application().configuration.getBoolean("ts.debug")
+  val serverUrl = Play.application().configuration.getString("ts.asServer1")
+}
+
+class BaseGlobal extends WithFilters(AccessLoggingFilter) with GlobalSettings {
+}
+
+object Global extends BaseGlobal {
 
   override def onRouteRequest(request: RequestHeader): Option[Handler] = {
     Logger.info("executed before every request:" + request.toString)
@@ -21,15 +36,35 @@ object Global extends GlobalSettings {
 
   override def onError(request: RequestHeader, e: Throwable) = {
     Logger.info("internal server error")
-    Future.successful(Results.InternalServerError("internal server error"))
+    Future.successful(Results.InternalServerError(
+      Json.obj("error" -> Json.toJson(new TwitSpikeException(TwitSpikeException.TS_INTERNAL_SERVER_ERROR, TSMsg.internalServerErrorMessage)))
+    ))
   }
 
-  /*
-   override def onHandlerNotFound(request: RequestHeader) = {
-   }
-   
-   override def onBadRequest(request: RequestHeader, error: String) = {
-   }
-   */
+  override def onHandlerNotFound(request: RequestHeader) = {
+    val sessionKey = UserAction.getSessionKeyFromRequest(request).getOrElse("")
+    val user = UserAction.getUserFromSessionKey(sessionKey)
+    Logger("error").error("[HandlerNotFound] path : " + request.path + ", session key : " + sessionKey + ", user : " + user.toString)
+    if (GlobalInfo.debug) {
+      super.onHandlerNotFound(request)
+    } else {
+      Future.successful(Results.NotFound(
+        Json.obj("error" -> Json.toJson(new TwitSpikeException(TwitSpikeException.NOT_FOUND_ERROR, TSMsg.notFoundErrorMessage)))
+      ))
+    }
+  }
+
+  override def onBadRequest(request: RequestHeader, error: String) = {
+    val sessionKey = UserAction.getSessionKeyFromRequest(request).getOrElse("")
+    val user = UserAction.getUserFromSessionKey(sessionKey)
+    Logger("error").error("[HandlerNotFound] path : " + request.path + ", session key : " + sessionKey + ", user : " + user.toString)
+    if (GlobalInfo.debug) {
+      super.onHandlerNotFound(request)
+    } else {
+      Future.successful(Results.BadRequest(
+        Json.obj("error" -> Json.toJson(new TwitSpikeException(TwitSpikeException.BAD_REQUEST_ERROR, TSMsg.badRequestErrorMessage)))
+      ))
+    }
+  }
 
 }

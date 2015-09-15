@@ -2,12 +2,7 @@ package jp.co.dwango.twitspike.services
 
 import com.aerospike.client.AerospikeClient
 import com.aerospike.client.large.LargeList
-import com.aerospike.client.policy.BatchPolicy
-import com.aerospike.client.policy.ClientPolicy
-import com.aerospike.client.policy.Policy
-import com.aerospike.client.policy.QueryPolicy
-import com.aerospike.client.policy.ScanPolicy
-import com.aerospike.client.policy.WritePolicy
+import com.aerospike.client.policy._
 import com.aerospike.client.Operation
 import com.aerospike.client.Value
 import com.aerospike.client.Bin
@@ -16,7 +11,8 @@ import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
 import scala.util.control.Exception.allCatch
-import play.api.Play
+import jp.co.dwango.twitspike.globals.GlobalInfo
+import play.api.{Logger, Play}
 import play.api.Play.current
 import scala.collection.JavaConversions.mapAsJavaMap
 
@@ -36,6 +32,32 @@ sealed trait AerospikeServiceTrait {
   val qPolicy = new QueryPolicy
 
   /**
+   * 各種Aerospikeポリシーのデフォルト値のセットアップ
+   */
+  private[this] def setupPolicy() = {
+    // client policy
+    cPolicy.timeout = 3000
+    cPolicy.maxThreads = 200
+
+    // write policy
+    wPolicy.timeout = 500 // 書き込みタイムアウト[ms]
+    wPolicy.expiration = 0 // aerospike configurationのdefault-ttlがデフォルト値
+    wPolicy.generationPolicy = GenerationPolicy.NONE // 書き込みに厳密なチェックを行わない
+    wPolicy.recordExistsAction = RecordExistsAction.UPDATE // 作成と更新
+    wPolicy.priority = Priority.HIGH
+
+    // read policy
+    rPolicy.timeout = 100 // 読み込みタイムアウト[ms]
+    rPolicy.maxRetries = 3 // リトライ回数
+    rPolicy.sleepBetweenRetries = 30 // リトライ間隔[ms]
+    rPolicy.priority = Priority.LOW
+    rPolicy.replica = Replica.MASTER
+    rPolicy.consistencyLevel = ConsistencyLevel.CONSISTENCY_ONE
+    rPolicy.sendKey = false // 読み込みと書き込み操作のときに追加のキーを送るかどうか
+  }
+  setupPolicy()
+
+  /**
    * レコードを一件読み出す
    *
    * @param client Aerospikeクライアント
@@ -46,7 +68,7 @@ sealed trait AerospikeServiceTrait {
     Try { client.get(rPolicy, key) } match {
       case Success(v) => Option(v)
       case Failure(e) => {
-        // @TODO output log
+        Logger("error").error("AerospikeService read error : ", e)
         None
       }
     }
@@ -101,7 +123,7 @@ sealed trait AerospikeServiceTrait {
     Try { client.put(wPolicy, key, bins: _*) } match {
       case Success(_) => Right(true)
       case Failure(e) => {
-        // @TODO output log
+        Logger("error").error("AerospikeService write error : ", e)
         Left(e)
       }
     }
@@ -118,7 +140,7 @@ sealed trait AerospikeServiceTrait {
     Try { client.delete(wPolicy, key) } match {
       case Success(v) => Right(v)
       case Failure(e) => {
-        // @TODO output log
+        Logger("error").error("AerospikeService remove error : ", e)
         Left(e)
       }
     }
@@ -135,7 +157,7 @@ sealed trait AerospikeServiceTrait {
     Try { client.exists(rPolicy, key) } match {
       case Success(v) => v
       case Failure(e) => {
-        // @TODO output log
+        Logger("error").error("AerospikeService exist error : ", e)
         false
       }
     }
@@ -161,14 +183,26 @@ sealed trait AerospikeServiceTrait {
    * ラージオーダードリストにハッシュマップデータを追加する
    */
   def addToLargeList(llist: LargeList, m: Map[_ <: Any, Any]) = {
-    allCatch either llist.add(Value.get(mapAsJavaMap(m)))
+    Try { llist.add(Value.get(mapAsJavaMap(m))) } match {
+      case Success(_) => Right(true)
+      case Failure(e) => {
+        Logger("error").error("AerospikeService LDT write error : ", e)
+        Left(e)
+      }
+    }
   }
 
   /**
    * ラージオーダードリストにデータを追加する
    */
   def addToLargeList(llist: LargeList, v: Long) = {
-    allCatch either llist.add(Value.get(v))
+    Try { llist.add(Value.get(v)) } match {
+      case Success(_) => Right(true)
+      case Failure(e) => {
+        Logger("error").error("AerospikeService LDT write error : ", e)
+        Left(e)
+      }
+    }
   }
 
   /**
@@ -187,6 +221,19 @@ sealed trait AerospikeServiceTrait {
   }
 
   /**
+   * ラージオーダードリストからデータを取得する
+   */
+  def findRecordsFromLargeList(llist: LargeList, v: Long, count: Int) = {
+    import scala.collection.JavaConversions.asScalaBuffer
+    import scala.collection.JavaConversions.mapAsScalaMap
+    for {
+      javaRecords <- (allCatch either llist.findFrom(Value.get(v), count)).right
+      records <- Right(Option(javaRecords).map(_.toList).getOrElse(List())).right
+      res <- Right(records.map { v => mapAsScalaMap(v.asInstanceOf[java.util.Map[java.lang.String, java.lang.Object]]) }).right
+    } yield res
+  }
+
+  /**
    * ラージオーダードリストにデータが存在するかどうか調べる
    */
   def existsInLargeList(llist: LargeList, v: Long) = {
@@ -194,12 +241,21 @@ sealed trait AerospikeServiceTrait {
   }
 
   /**
+   * ラージオーダードリストの値をすべて取得する。値はハッシュマップ。
+   */
+  def scanMapLargeList(llist: LargeList) = {
+    import scala.collection.JavaConversions.asScalaBuffer
+    import scala.collection.JavaConversions.mapAsScalaMap
+    val records = Option(llist.scan).map(_.toList).getOrElse(List())
+    records.map { v => mapAsScalaMap(v.asInstanceOf[java.util.Map[java.lang.String, java.lang.Object]]) }
+  }
+
+  /**
    * ラージオーダードリストの値をすべて取得する
    */
   def scanLargeList(llist: LargeList) = {
     import scala.collection.JavaConversions.asScalaBuffer
-    val records = llist.scan
-    if (records != null) records.toList else List()
+    Option(llist.scan).map(_.toList).getOrElse(List())
   }
 
 }
@@ -208,15 +264,13 @@ class AerospikeService extends AerospikeServiceTrait {
 
 }
 
-object AerospikeService {
-
-  val serverUrl = Play.configuration.getString("ts.asServer1").get
+object AerospikeService extends AerospikeService {
 
   /**
    * Aerospikeクライアントを取得する
    */
   def getClient = {
-    allCatch either new AerospikeClient(serverUrl, 3000)
+    allCatch either new AerospikeClient(GlobalInfo.serverUrl, 3000)
   }
 
 }

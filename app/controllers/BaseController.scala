@@ -21,7 +21,13 @@ trait TSMsgTrait {
   val permissionErrorMessage = Play.configuration.getString("ts.msgs.error.permissionError").get
   val tweetNotFoundErrorMessage = Play.configuration.getString("ts.msgs.error.tweetNotFound").get
   val alreadyFollowErrorMessage = Play.configuration.getString("ts.msgs.error.alreadyFollowFound").get
+  val notFoundErrorMessage = Play.configuration.getString("ts.msgs.error.notFound").get
+  val badRequestErrorMessage = Play.configuration.getString("ts.msgs.error.badRequest").get
+  val emailAlreadyRegisterdErrorMessage = Play.configuration.getString("ts.msgs.error.emailAlreadyRegisterd").get
+
 }
+
+object TSMsg extends TSMsgTrait
 
 /**
  * BaseController

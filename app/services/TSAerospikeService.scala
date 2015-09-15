@@ -28,6 +28,8 @@ trait TSAerospikeTrait {
 
   val celebsSet = "celebs"
 
+  val timelinesSet = "timelines"
+
   def getUsersKey(userId: Long) = new Key(ns, usersSet, userId)
 
   def getUsersKeys(userIds: List[Long]) = userIds.map { getUsersKey(_) }
@@ -47,6 +49,8 @@ trait TSAerospikeTrait {
   def getCelebsKey(userId: Long) = new Key(ns, celebsSet, userId)
 
   def getFansKey(userId: Long) = new Key(ns, fansSet, userId)
+
+  def getTimelinesKey(userId: Long) = new Key(ns, timelinesSet, userId)
 
 }
 

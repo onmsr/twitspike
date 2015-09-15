@@ -1,0 +1,6 @@
+
+# Batch Routes
+# ~~~~
+
+# バッチ関連API
+GET    /batchs/sweep_timelines      jp.co.dwango.twitspike.controllers.BatchController.sweepTimelines()

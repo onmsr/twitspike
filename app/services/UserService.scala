@@ -1,7 +1,6 @@
 package jp.co.dwango.twitspike.services
 
-import com.aerospike.client.AerospikeClient
-import com.aerospike.client.Bin
+import com.aerospike.client.{AerospikeClient, Bin}
 import java.util.UUID
 import jp.co.dwango.twitspike.models.User
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException
@@ -10,6 +9,7 @@ import jp.co.dwango.twitspike.controllers.TSMsgTrait
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.mindrot.jbcrypt.BCrypt
+import scala.util.control.Exception.allCatch
 
 /**
  * UserService
@@ -42,7 +42,14 @@ class UserService(_client: AerospikeClient)
    * @return
    */
   def create(name: String, nickname: String, email: String, description: String, rawPassword: String) = {
+    // メールアドレスがすでに利用されているか確認
+    val checkEmailAlreadyUsed = read(client, getAuthenticationsKey(email)) match {
+      case Some(authInfo) => Left(new TwitSpikeException(EMAIL_ALREADY_REGISTERD_ERROR, emailAlreadyRegisterdErrorMessage))
+      case None => Right(true)
+    }
+
     for {
+      _ <- checkEmailAlreadyUsed.right
       id <- nextId.right
       password <- Right(BCrypt.hashpw(rawPassword, BCrypt.gensalt(12))).right
       _ <- createUser(id, name, nickname, email, description).right
@@ -111,12 +118,44 @@ class UserService(_client: AerospikeClient)
   }
 
   /**
+   * ユーザーのタイムラインを取得する。
+   *
+   * @param userId ユーザーID
+   * @return
+   */
+  def findTimeline(userId: Long, count: Int, start: Option[Long], endFilter: Option[Long]) = {
+    val s = start.getOrElse(System.currentTimeMillis)
+    val e = endFilter.getOrElse(0L)
+    for {
+      timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
+      tweetMaps <- findRecordsFromLargeList(timeline, -s, count).right
+      filteredTweetMaps <- Right(tweetMaps.filter(_.get("key").get.asInstanceOf[Long] <= -e)).right
+      tweetIds <- Right(filteredTweetMaps.map(_.get("tweetId").get.asInstanceOf[Long])).right
+      tweets <- Right(new TweetService(client).findByIds(tweetIds)).right
+    } yield tweets
+  }
+
+  /**
+   * ユーザーのタイムラインを取得する。
+   *
+   * @param userId ユーザーID
+   * @return
+   */
+  def findTimelineAll(userId: Long) = {
+    for {
+      timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
+      tweetIds <- Right(scanMapLargeList(timeline).map { _.get("tweetId").get.asInstanceOf[Long] }).right
+      tweets <- Right(new TweetService(client).findByIds(tweetIds)).right
+    } yield tweets
+  }
+
+  /**
    * ユーザーのタイムラインを取得する。愚直に全部合成版
    *
    * @param userId ユーザーID
    * @return
    */
-  def findTimeline(userId: Long) = {
+  def findTimelineSimple(userId: Long) = {
     val celebIds = findCelebIds(userId)
     val ts = new TweetService(client)
     val tweetIds = (userId :: celebIds).map(ts.findIds(_)).flatten
@@ -139,6 +178,7 @@ class UserService(_client: AerospikeClient)
       case Right((isAuth, authInfo)) => {
         if (isAuth) {
           // 認証成功 + セッションキー発行
+          wPolicy.expiration = 7*86400 // 7days
           val id = authInfo.getLong("user_id")
           val sessionKey = UUID.randomUUID().toString
           val ts = new DateTime().toString(ISODateTimeFormat.dateTimeNoMillis)
@@ -148,6 +188,7 @@ class UserService(_client: AerospikeClient)
           val timestampBin = new Bin("timestamp", ts)
 
           write(client, getSessionkeysKey(sessionKey), Array(userIdBin, sessionKeyBin, timestampBin))
+          wPolicy.expiration = 0
           Right(sessionKey)
         } else {
           Left(new TwitSpikeException(AUTH_FAILED_ERROR, authFailedErrorMessage))
@@ -219,6 +260,31 @@ class UserService(_client: AerospikeClient)
     val userIdBin = new Bin("user_id", userId)
     val key = getNicknamesKey(nickname)
     write(client, key, Array(userIdBin))
+  }
+
+  /**
+   * タイムラインのツイート数がN+MARGIN件を超えていればN件まで古いツイートを削除する
+   *
+   * @param userId
+   * @param n
+   * @param margin
+   */
+  def sweepTimeline(userId: Long, n: Int, margin: Int) = {
+    (for {
+      timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
+      size <- (allCatch either timeline.size).right
+      _ <- (if (size < n + margin) Left(false) else Right(true)).right // check size > n+margin
+      records <- (allCatch either timeline.findLast(size-n)).right // get remove data
+      _ <- (allCatch either timeline.remove(records)).right // remove data
+    } yield true) match {
+      case Left(e) => {
+        e match {
+          case false => Right(false)
+          case _ => Left(e)
+        }
+      }
+      case Right(result) => Right(result)
+    }
   }
 
 }
