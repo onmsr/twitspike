@@ -131,7 +131,7 @@ class TweetService(_client: AerospikeClient)
   def findIds(userId: Long) = {
     val key = getUserTweetsKey(userId)
     val llist = client.getLargeList(wPolicy, key, "tweets")
-    scanLargeList(llist).asInstanceOf[List[Long]]
+    scanMapLargeList(llist).asInstanceOf[List[Long]]
   }
 
 }

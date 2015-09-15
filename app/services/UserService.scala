@@ -144,7 +144,7 @@ class UserService(_client: AerospikeClient)
   def findTimelineAll(userId: Long) = {
     for {
       timeline <- getLargeList(client, wPolicy, getTimelinesKey(userId), "timeline").right
-      tweetIds <- Right(scanLargeList(timeline).map { _.get("tweetId").get.asInstanceOf[Long] }).right
+      tweetIds <- Right(scanMapLargeList(timeline).map { _.get("tweetId").get.asInstanceOf[Long] }).right
       tweets <- Right(new TweetService(client).findByIds(tweetIds)).right
     } yield tweets
   }

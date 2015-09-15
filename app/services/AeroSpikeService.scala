@@ -241,13 +241,21 @@ sealed trait AerospikeServiceTrait {
   }
 
   /**
-   * ラージオーダードリストの値をすべて取得する
+   * ラージオーダードリストの値をすべて取得する。値はハッシュマップ。
    */
-  def scanLargeList(llist: LargeList) = {
+  def scanMapLargeList(llist: LargeList) = {
     import scala.collection.JavaConversions.asScalaBuffer
     import scala.collection.JavaConversions.mapAsScalaMap
     val records = Option(llist.scan).map(_.toList).getOrElse(List())
     records.map { v => mapAsScalaMap(v.asInstanceOf[java.util.Map[java.lang.String, java.lang.Object]]) }
+  }
+
+  /**
+   * ラージオーダードリストの値をすべて取得する
+   */
+  def scanLargeList(llist: LargeList) = {
+    import scala.collection.JavaConversions.asScalaBuffer
+    Option(llist.scan).map(_.toList).getOrElse(List())
   }
 
 }
