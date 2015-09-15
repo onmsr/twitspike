@@ -9,4 +9,4 @@ case class SessionKey(
   sessionKey: String,
   userId: String,
   timestamp: String
-)
+  )

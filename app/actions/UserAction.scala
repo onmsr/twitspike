@@ -1,12 +1,12 @@
 package jp.co.dwango.twitspike.actions
 
-import jp.co.dwango.twitspike.models.User
-import jp.co.dwango.twitspike.services.UserService
-import jp.co.dwango.twitspike.services.AerospikeService
-import play.api.mvc._
+import scala.concurrent.Future
 import scala.util.control.Exception.allCatch
 
-import scala.concurrent.Future
+import jp.co.dwango.twitspike.models.User
+import jp.co.dwango.twitspike.services.{AerospikeService, UserService}
+
+import play.api.mvc._
 
 class UserRequest[A](val user: Option[User], val sessionKey: Option[String], request: Request[A]) extends WrappedRequest[A](request)
 

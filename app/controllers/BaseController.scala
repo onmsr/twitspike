@@ -1,11 +1,10 @@
 package jp.co.dwango.twitspike.controllers
 
-import jp.co.dwango.twitspike.exceptions.TwitSpikeExceptionTrait
-import jp.co.dwango.twitspike.exceptions.TwitSpikeException
-import play.api.mvc.Controller
+import jp.co.dwango.twitspike.exceptions.{TwitSpikeException, TwitSpikeExceptionTrait}
 import play.api.Play
 import play.api.Play.current
 import play.api.data.Form
+import play.api.mvc.Controller
 
 /**
  * エラーメッセージ一覧
@@ -31,7 +30,7 @@ object TSMsg extends TSMsgTrait
 
 /**
  * BaseController
- * 
+ *
  * APIコントローラーの基底クラス
  */
 class BaseController extends Controller with TSMsgTrait with TwitSpikeExceptionTrait {

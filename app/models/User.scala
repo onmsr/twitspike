@@ -13,7 +13,7 @@ case class User(
   description: String,
   createdAt: String,
   updatedAt: String
-)
+  )
 
 object User {
   implicit def userRecordMapToUser[A](m: Map[String, Object]) = {

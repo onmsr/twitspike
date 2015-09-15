@@ -1,20 +1,14 @@
 package jp.co.dwango.twitspike.services
 
-import com.aerospike.client.AerospikeClient
+import scala.collection.JavaConversions.mapAsJavaMap
+import scala.util.{Failure, Success, Try}
+import scala.util.control.Exception.allCatch
+
+import com.aerospike.client.{AerospikeClient, Bin, Key, Operation, Value}
 import com.aerospike.client.large.LargeList
 import com.aerospike.client.policy._
-import com.aerospike.client.Operation
-import com.aerospike.client.Value
-import com.aerospike.client.Bin
-import com.aerospike.client.Key
-import scala.util.Try
-import scala.util.Failure
-import scala.util.Success
-import scala.util.control.Exception.allCatch
 import jp.co.dwango.twitspike.globals.GlobalInfo
-import play.api.{Logger, Play}
-import play.api.Play.current
-import scala.collection.JavaConversions.mapAsJavaMap
+import play.api.Logger
 
 /**
  * AerospikeService
@@ -55,6 +49,7 @@ sealed trait AerospikeServiceTrait {
     rPolicy.consistencyLevel = ConsistencyLevel.CONSISTENCY_ONE
     rPolicy.sendKey = false // 読み込みと書き込み操作のときに追加のキーを送るかどうか
   }
+
   setupPolicy()
 
   /**
@@ -224,8 +219,7 @@ sealed trait AerospikeServiceTrait {
    * ラージオーダードリストからデータを取得する
    */
   def findRecordsFromLargeList(llist: LargeList, v: Long, count: Int) = {
-    import scala.collection.JavaConversions.asScalaBuffer
-    import scala.collection.JavaConversions.mapAsScalaMap
+    import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap}
     for {
       javaRecords <- (allCatch either llist.findFrom(Value.get(v), count)).right
       records <- Right(Option(javaRecords).map(_.toList).getOrElse(List())).right
@@ -244,8 +238,7 @@ sealed trait AerospikeServiceTrait {
    * ラージオーダードリストの値をすべて取得する。値はハッシュマップ。
    */
   def scanMapLargeList(llist: LargeList) = {
-    import scala.collection.JavaConversions.asScalaBuffer
-    import scala.collection.JavaConversions.mapAsScalaMap
+    import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap}
     val records = Option(llist.scan).map(_.toList).getOrElse(List())
     records.map { v => mapAsScalaMap(v.asInstanceOf[java.util.Map[java.lang.String, java.lang.Object]]) }
   }

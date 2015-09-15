@@ -2,7 +2,7 @@ package jp.co.dwango.twitspike.services
 
 import com.aerospike.client.AerospikeClient
 import jp.co.dwango.twitspike.controllers.TSMsgTrait
-import jp.co.dwango.twitspike.exceptions.{TwitSpikeExceptionTrait, TwitSpikeException}
+import jp.co.dwango.twitspike.exceptions.{TwitSpikeException, TwitSpikeExceptionTrait}
 
 /**
  * FollowService
@@ -19,7 +19,7 @@ class FollowService(_client: AerospikeClient)
 
   /**
    * フォロー情報を作成する
-   * 
+   *
    * @param userId          フォローするユーザーID
    * @param targetUserId    フォローされるユーザーID
    * @return
@@ -43,7 +43,7 @@ class FollowService(_client: AerospikeClient)
 
   /**
    * フォロー情報を削除する
-   * 
+   *
    * @param userId          フォローしているユーザーID
    * @param targetUserId    フォローされているユーザーID
    * @return
@@ -67,7 +67,7 @@ class FollowService(_client: AerospikeClient)
 
   /**
    * フォローしているかどうか確認する
-   * 
+   *
    * @param srcUserId        ユーザーID
    * @param targetUserId    フォローされているかもしれないユーザーID
    * @return
@@ -81,7 +81,7 @@ class FollowService(_client: AerospikeClient)
 
   /**
    * フォローされているかどうか確認する
-   * 
+   *
    * @param targetUserId    ユーザーID
    * @param srcUserId       フォローしているかもしれないユーザーID
    * @return

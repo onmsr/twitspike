@@ -6,4 +6,4 @@ case class PostUserRequestData(
   email: String,
   description: String,
   rawPassword: String
-)
+  )

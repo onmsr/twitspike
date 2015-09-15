@@ -1,7 +1,6 @@
 package jp.co.dwango.twitspike.exceptions
 
-import play.api.libs.json.Json
-import play.api.libs.json.Writes
+import play.api.libs.json.{Json, Writes}
 
 /**
  * TwitSpikeException
@@ -18,7 +17,7 @@ case class TwitSpikeException(code: Int, message: String) extends RuntimeExcepti
 trait TwitSpikeExceptionTrait {
   /**
    * ユーザーが見つからない
-   */  
+   */
   val USER_NOT_FOUND_ERROR = 1000
 
   /**
@@ -43,9 +42,9 @@ trait TwitSpikeExceptionTrait {
 
   /**
    * バリデーションエラー
-   */  
+   */
   val VALIDATIONS_ERROR = 2000
-   
+
   /**
    * セッションキーを指定していない
    */

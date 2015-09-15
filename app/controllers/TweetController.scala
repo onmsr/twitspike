@@ -1,22 +1,20 @@
 package jp.co.dwango.twitspike.controllers
 
-import jp.co.dwango.twitspike.services.AerospikeService
-import jp.co.dwango.twitspike.services.UserService
-import jp.co.dwango.twitspike.services.TweetService
-import jp.co.dwango.twitspike.validations.TweetRequestDataConstraint
-import jp.co.dwango.twitspike.exceptions.TwitSpikeException
-import jp.co.dwango.twitspike.actions.UserAction
-import play.api.mvc.Action
-import play.api.libs.json.Json
 import scala.util.control.Exception.allCatch
-import jp.co.dwango.twitspike.models.User
-import jp.co.dwango.twitspike.models.Tweet
+
+import jp.co.dwango.twitspike.actions.UserAction
+import jp.co.dwango.twitspike.exceptions.TwitSpikeException
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException.writes
+import jp.co.dwango.twitspike.models.{Tweet, User}
 import jp.co.dwango.twitspike.models.response.TweetResponseData
+import jp.co.dwango.twitspike.services.{AerospikeService, TweetService, UserService}
+import jp.co.dwango.twitspike.validations.TweetRequestDataConstraint
+import play.api.libs.json.Json
+import play.api.mvc.Action
 
 /**
  * TweetController
- * 
+ *
  * ツイート関連のAPIを管理するコントローラー
  */
 class TweetController extends BaseController {
@@ -55,7 +53,7 @@ class TweetController extends BaseController {
    * @param tweetId ツイートID
    * @return
    */
-  def delete(tweetId: Long) = UserAction { implicit request => 
+  def delete(tweetId: Long) = UserAction { implicit request =>
     (for {
       sessionKey <- request.sessionKey.toRight(
         new TwitSpikeException(SESSION_KEY_REQUIRED_ERROR, sessionKeyRequiredErrorMessage)).right

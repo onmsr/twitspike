@@ -1,7 +1,6 @@
 package jp.co.dwango.twitspike.models.response
 
-import play.api.libs.json.Json
-import play.api.libs.json.Writes
+import play.api.libs.json.{Json, Writes}
 
 case class TweetResponseData(
   id: Long,
@@ -9,7 +8,7 @@ case class TweetResponseData(
   createdAt: String,
   userId: Long,
   userNickname: String
-)
+  )
 
 object TweetResponseData {
   implicit val writes = new Writes[TweetResponseData] {

@@ -1,16 +1,16 @@
 package jp.co.dwango.twitspike.controllers
 
+import scala.util.control.Exception.allCatch
+
 import jp.co.dwango.twitspike.actions.UserAction
-import play.api.libs.json.Json
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException
 import jp.co.dwango.twitspike.exceptions.TwitSpikeException.writes
-import jp.co.dwango.twitspike.services.AerospikeService
-import jp.co.dwango.twitspike.services.FollowService
-import scala.util.control.Exception.allCatch
+import jp.co.dwango.twitspike.services.{AerospikeService, FollowService}
+import play.api.libs.json.Json
 
 /**
  * FollowController
- * 
+ *
  * フォロー関連のAPIを管理するコントローラー
  */
 class FollowController extends BaseController {
