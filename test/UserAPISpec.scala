@@ -152,6 +152,19 @@ class UserAPISpec extends Specification {
       }
     }
 
+    "[GET /users/:userId/timeline] ユーザーのタイムラインの取得" should {
+      "正常にユーザーのタイムラインが取得できる" in new WithApplication{
+        val userId = 5
+        val req = FakeRequest(GET, s"/users/${userId}/timeline")
+
+        val fres = route(req).get
+
+        status(fres) must equalTo(OK)
+        contentType(fres) must beSome("application/json")
+        contentAsString(fres) must contain ("timeline")
+      }
+    }
+
     // "[GET /users/:userId/fans] ユーザーのファン一覧取得" should {}
     // "[GET /users/:userId/celebs] ユーザーのセレブ一覧取得" should {}
     // "[GET /users/:userId/tweets] ユーザーのツイート一覧取得" should {}
