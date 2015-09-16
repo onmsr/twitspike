@@ -10,6 +10,7 @@ libraryDependencies ++= Seq(
   jdbc,
   cache,
   ws,
+  filters,
   specs2 % Test,
   "com.aerospike" % "aerospike-client" % "latest.integration",
   "de.svenkubiak" % "jBCrypt" % "0.4"
