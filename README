@@ -1,4 +1,14 @@
-This is your new Play application
+twitspike
 =================================
 
-This file will be packaged with your application, when using `activator dist`.
+データベースにaerospikeを利用したtwitterのようなもの
+APIのみです。
+
+## 環境設定
+1. java, sbt, aerospikeをインストール
+1. aerospikeを起動
+
+## 起動方法
+```
+./activator run
+```
